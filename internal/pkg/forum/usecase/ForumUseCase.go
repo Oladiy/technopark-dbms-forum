@@ -4,17 +4,20 @@ import (
 	"regexp"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/forum"
+	"technopark-dbms-forum/internal/pkg/thread"
 	"technopark-dbms-forum/internal/pkg/user"
 )
 
 type ForumUseCase struct {
 	ForumRepository forum.Repository
+	ThreadRepository thread.Repository
 	UserRepository 	user.Repository
 }
 
-func NewForumUseCase(forumRepository forum.Repository, userRepository user.Repository) *ForumUseCase {
+func NewForumUseCase(forumRepository forum.Repository, threadRepository thread.Repository, userRepository user.Repository) *ForumUseCase {
 	return &ForumUseCase {
 		ForumRepository: forumRepository,
+		ThreadRepository: threadRepository,
 		UserRepository:  userRepository,
 	}
 }
@@ -42,4 +45,17 @@ func (t *ForumUseCase) GetForumDetails(slug string) (*forum.Forum, error) {
 	}
 
 	return t.ForumRepository.GetForumDetails(slug)
+}
+
+func (t *ForumUseCase) GetForumThreadList(slug string, limit int, since string, desc bool) (*[]thread.Thread, error) {
+	if len(slug) == 0 {
+		return nil, customErrors.IncorrectInputData
+	}
+
+	_, err := t.ForumRepository.GetForumDetails(slug)
+	if err == customErrors.ForumSlugNotFound {
+		return nil, customErrors.ForumSlugNotFound
+	}
+
+	return t.ThreadRepository.GetThreadList(slug, limit, since, desc)
 }

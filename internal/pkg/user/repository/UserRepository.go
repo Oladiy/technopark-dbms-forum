@@ -18,8 +18,11 @@ func NewUserRepository(connectionDB *sql.DB) *UserRepository {
 }
 
 func (t* UserRepository) CreateUser(nickname string, profile *user.RequestBody) (*[]user.User, error) {
-	queryInsert := "INSERT INTO Users (nickname, fullname, about, email) VALUES($1, $2, $3, $4);"
-	querySelect := "SELECT nickname, fullname, about, email FROM Users WHERE nickname = $1 or email = $2;"
+	queryInsert := `INSERT INTO Users (nickname, fullname, about, email) 
+					VALUES($1, $2, $3, $4);`
+	querySelect := `SELECT nickname, fullname, about, email 
+					FROM Users 
+					WHERE nickname = $1 or email = $2;`
 	selection := make([]user.User, 0)
 
 	_, err := t.connectionDB.Exec(queryInsert, nickname, profile.FullName, profile.About, profile.Email)
@@ -49,7 +52,9 @@ func (t* UserRepository) CreateUser(nickname string, profile *user.RequestBody) 
 }
 
 func (t* UserRepository) GetUserProfile(nickname string) (*user.User, error) {
-	querySelect := "SELECT nickname, fullname, about, email FROM Users WHERE nickname = $1"
+	querySelect := `SELECT nickname, fullname, about, email 
+					FROM Users 
+					WHERE nickname = $1;`
 	selection := t.connectionDB.QueryRow(querySelect, nickname)
 	if selection == nil {
 		return nil, customErrors.UserNotFound

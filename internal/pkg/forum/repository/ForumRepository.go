@@ -17,8 +17,12 @@ func NewForumRepository(connectionDB *sql.DB) *ForumRepository {
 }
 
 func (t *ForumRepository) CreateForum(requestBody *forum.RequestBody) (*forum.Forum, error) {
-	queryInsert := "INSERT INTO Forum (title, author, slug) VALUES($1, $2, $3) returning title, author, slug;"
-	querySelect := "SELECT title, author, slug, posts, threads FROM Forum WHERE slug = $1;"
+	queryInsert := `INSERT INTO Forum (title, author, slug) 
+					VALUES($1, $2, $3) 
+					returning title, author, slug;`
+	querySelect := `SELECT title, author, slug, posts, threads 
+					FROM Forum 
+					WHERE slug = $1;`
 	f := new(forum.Forum)
 
 	row := t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.User, requestBody.Slug)
@@ -37,7 +41,9 @@ func (t *ForumRepository) CreateForum(requestBody *forum.RequestBody) (*forum.Fo
 }
 
 func (t *ForumRepository) GetForumDetails(slug string) (*forum.Forum, error) {
-	querySelect := "SELECT title, author, slug, posts, threads FROM Forum WHERE slug = $1"
+	querySelect := `SELECT title, author, slug, posts, threads 
+					FROM Forum 
+					WHERE slug = $1;`
 	selection := t.connectionDB.QueryRow(querySelect, slug)
 	if selection == nil {
 		return nil, customErrors.ForumSlugNotFound

@@ -26,7 +26,7 @@ func Run(connectionDB *sql.DB) *Service {
 	threadRepository := threadRep.NewThreadRepository(connectionDB)
 	userRepository := userRep.NewUserRepository(connectionDB)
 	forumRepository := repository.NewForumRepository(connectionDB)
-	forumUseCase := usecase.NewForumUseCase(forumRepository, userRepository)
+	forumUseCase := usecase.NewForumUseCase(forumRepository, threadRepository, userRepository)
 	threadUseCase := threadUC.NewForumUseCase(threadRepository, forumRepository, userRepository)
 	forumDelivery := delivery.NewForumDelivery(forumUseCase, threadUseCase)
 
@@ -34,6 +34,7 @@ func Run(connectionDB *sql.DB) *Service {
 	router.HandleFunc(fmt.Sprintf("/api/forum/create"), forumDelivery.CreateForum)
 	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/details", consts.ForumSlugPath), forumDelivery.GetForumDetails).Methods(http.MethodGet)
 	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/create", consts.ForumSlugPath), forumDelivery.CreateForumThread)
+	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/threads", consts.ForumSlugPath), forumDelivery.GetForumThreads)
 
 	return &Service {
 		Delivery: forumDelivery,

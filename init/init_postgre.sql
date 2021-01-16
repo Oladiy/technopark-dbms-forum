@@ -26,7 +26,7 @@ CREATE TABLE Thread (
     forum citext NOT NULL,
     message TEXT,
     votes INTEGER DEFAULT 0,
-    slug citext NOT NULL UNIQUE,
+    slug citext NOT NULL,
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
