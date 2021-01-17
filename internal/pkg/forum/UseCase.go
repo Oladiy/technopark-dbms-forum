@@ -6,6 +6,7 @@ import (
 
 type UseCase interface {
 	CreateForum(requestBody *RequestBody) (*Forum, error)
+	CreateForumThread(slug string, requestBody *thread.RequestBody) (*thread.Thread, error)
 	GetForumDetails(slug string) (*Forum, error)
-	GetForumThreadList(slug string, limit int, since string, desc bool) (*[]thread.Thread, error)
+	GetForumThreads(slug string, limit int, since string, desc bool) (*[]thread.Thread, error)
 }

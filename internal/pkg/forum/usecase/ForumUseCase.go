@@ -47,7 +47,7 @@ func (t *ForumUseCase) GetForumDetails(slug string) (*forum.Forum, error) {
 	return t.ForumRepository.GetForumDetails(slug)
 }
 
-func (t *ForumUseCase) GetForumThreadList(slug string, limit int, since string, desc bool) (*[]thread.Thread, error) {
+func (t *ForumUseCase) GetForumThreads(slug string, limit int, since string, desc bool) (*[]thread.Thread, error) {
 	if len(slug) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
@@ -57,5 +57,25 @@ func (t *ForumUseCase) GetForumThreadList(slug string, limit int, since string, 
 		return nil, customErrors.ForumSlugNotFound
 	}
 
-	return t.ThreadRepository.GetThreadList(slug, limit, since, desc)
+	return t.ForumRepository.GetForumThreads(slug, limit, since, desc)
+}
+
+func (t *ForumUseCase) CreateForumThread(slug string, requestBody *thread.RequestBody) (*thread.Thread, error) {
+	u, err := t.UserRepository.GetUserProfile(requestBody.Author)
+	if err != nil || u == nil {
+		return nil, customErrors.ThreadUserNotFound
+	}
+	requestBody.Author = u.Nickname
+
+	f, err := t.ForumRepository.GetForumDetails(slug)
+	if err != nil || f == nil {
+		return nil, customErrors.ThreadForumNotFound
+	}
+	slug = f.Slug
+
+	if len(requestBody.Title) == 0 || len(requestBody.Author) == 0 || len(requestBody.Message) == 0 {
+		return nil, customErrors.IncorrectInputData
+	}
+
+	return t.ForumRepository.CreateForumThread(slug, requestBody)
 }

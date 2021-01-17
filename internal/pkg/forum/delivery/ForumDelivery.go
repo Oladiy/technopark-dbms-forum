@@ -95,7 +95,7 @@ func (t *ForumDelivery) CreateForumThread(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response, err := t.ThreadUseCase.CreateThread(slug, requestBody)
+	response, err := t.ForumUseCase.CreateForumThread(slug, requestBody)
 	if err != nil {
 		w.WriteHeader(customErrors.StatusCodes[err])
 		if response != nil {
@@ -147,7 +147,7 @@ func (t *ForumDelivery) GetForumThreads(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	response, err := t.ForumUseCase.GetForumThreadList(slug, limit, since, desc)
+	response, err := t.ForumUseCase.GetForumThreads(slug, limit, since, desc)
 	if err != nil {
 		w.WriteHeader(customErrors.StatusCodes[err])
 		utils.MakeErrorResponse(w, err)
