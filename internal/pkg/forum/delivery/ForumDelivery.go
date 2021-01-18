@@ -17,10 +17,9 @@ type ForumDelivery struct {
 	ThreadUseCase thread.UseCase
 }
 
-func NewForumDelivery(forumUseCase forum.UseCase, threadUseCase thread.UseCase) *ForumDelivery {
+func NewForumDelivery(forumUseCase forum.UseCase) *ForumDelivery {
 	return &ForumDelivery {
 		ForumUseCase: forumUseCase,
-		ThreadUseCase: threadUseCase,
 	}
 }
 

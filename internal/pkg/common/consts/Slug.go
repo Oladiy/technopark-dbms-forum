@@ -1,5 +1,6 @@
 package consts
 
 const (
-	ForumSlugPath = "slug"
+	ForumSlugPath = "forum"
+	ThreadSlugPath = "thread"
 )

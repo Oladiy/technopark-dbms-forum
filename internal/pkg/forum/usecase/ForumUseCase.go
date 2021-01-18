@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"log"
 	"regexp"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/forum"
@@ -71,11 +72,20 @@ func (t *ForumUseCase) CreateForumThread(slug string, requestBody *thread.Reques
 	if err != nil || f == nil {
 		return nil, customErrors.ThreadForumNotFound
 	}
+	log.Println("just a slug: ", slug)
 	slug = f.Slug
 
 	if len(requestBody.Title) == 0 || len(requestBody.Author) == 0 || len(requestBody.Message) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
+
+	th, err := t.ThreadRepository.GetThread("", 0, requestBody.Slug)
+	if th != nil {
+		return th, customErrors.ThreadAlreadyExists
+	}
+	log.Println("forum request body: ", requestBody.Forum)
+	log.Println("slug request body: ", requestBody.Slug)
+	log.Println("f slug: ", f.Slug)
 
 	return t.ForumRepository.CreateForumThread(slug, requestBody)
 }

@@ -8,13 +8,15 @@ import (
 	"net/http"
 	"strconv"
 	"technopark-dbms-forum/internal/app/forum"
+	"technopark-dbms-forum/internal/app/thread"
 	"technopark-dbms-forum/internal/app/user"
 	"time"
 )
 
 type ServerConfig struct {
-	ForumService *forum.Service
-	UserService *user.Service
+	ForumService	*forum.Service
+	ThreadService 	*thread.Service
+	UserService   	*user.Service
 }
 
 type ServiceConfig struct {
@@ -51,17 +53,20 @@ func configureMainRouter(application *ServerConfig) http.Handler{
 	handler := http.NewServeMux()
 
 	handler.Handle("/api/forum/", application.ForumService.Router)
+	handler.Handle("/api/thread/", application.ThreadService.Router)
 	handler.Handle("/api/user/", application.UserService.Router)
 
 	return handler
 }
 
 func InitService(connectionDB *sql.DB) *ServerConfig{
-	forumService := forum.Run(connectionDB)
-	userService := user.Run(connectionDB)
+	forumService 	:= forum.Run(connectionDB)
+	threadService 	:= thread.Run(connectionDB)
+	userService 	:= user.Run(connectionDB)
 
 	return &ServerConfig{
 		ForumService:	forumService,
+		ThreadService:	threadService,
 		UserService:   	userService,
 	}
 }

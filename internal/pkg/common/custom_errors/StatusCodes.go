@@ -14,10 +14,12 @@ var (
 
 		ThreadAlreadyExists:	 http.StatusConflict,
 		ThreadForumNotFound: 	 http.StatusNotFound,
+		ThreadParentNotFound: 	 http.StatusConflict,
+		ThreadSlugNotFound:		 http.StatusNotFound,
 		ThreadUserNotFound: 	 http.StatusNotFound,
 
+		UserAlreadyExists:       http.StatusConflict,
 		UserNotFound:            http.StatusNotFound,
 		UserProfileDataConflict: http.StatusConflict,
-		UserAlreadyExists:       http.StatusConflict,
 	}
 )

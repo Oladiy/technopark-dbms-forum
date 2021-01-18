@@ -33,11 +33,11 @@ CREATE TABLE Thread (
 CREATE TABLE Post (
     id SERIAL PRIMARY KEY,
     parent INTEGER DEFAULT 0,
-    author citext REFERENCES Users(nickname),
+    author citext NOT NULL,
     message TEXT,
     isEdited BOOLEAN DEFAULT FALSE,
-    forum citext REFERENCES Forum(slug),
-    thread INTEGER REFERENCES Thread(id),
+    forum citext NOT NULL,
+    thread INTEGER,
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 

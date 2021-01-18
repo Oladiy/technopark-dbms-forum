@@ -11,7 +11,6 @@ import (
 	"technopark-dbms-forum/internal/pkg/forum/repository"
 	"technopark-dbms-forum/internal/pkg/forum/usecase"
 	threadRep "technopark-dbms-forum/internal/pkg/thread/repository"
-	threadUC "technopark-dbms-forum/internal/pkg/thread/usecase"
 	userRep "technopark-dbms-forum/internal/pkg/user/repository"
 )
 
@@ -27,8 +26,7 @@ func Run(connectionDB *sql.DB) *Service {
 	userRepository := userRep.NewUserRepository(connectionDB)
 	forumRepository := repository.NewForumRepository(connectionDB)
 	forumUseCase := usecase.NewForumUseCase(forumRepository, threadRepository, userRepository)
-	threadUseCase := threadUC.NewForumUseCase(threadRepository, forumRepository, userRepository)
-	forumDelivery := delivery.NewForumDelivery(forumUseCase, threadUseCase)
+	forumDelivery := delivery.NewForumDelivery(forumUseCase)
 
 	router := mux.NewRouter()
 	router.HandleFunc(fmt.Sprintf("/api/forum/create"), forumDelivery.CreateForum)

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"log"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/forum"
 	"technopark-dbms-forum/internal/pkg/thread"
@@ -119,8 +118,10 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *thread.Req
 			return nil, customErrors.IncorrectInputData
 		}
 
-		return th, customErrors.ForumAlreadyExists
+		return th, customErrors.ThreadAlreadyExists
 	}
+
+	(*th).Forum = slug
 
 	return th, nil
 }
@@ -134,7 +135,6 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 	lengthSince := len(since)
 
 	if desc {
-		log.Println(desc)
 		if lengthSince != 0 && limit != 0 {
 			querySelect = `	SELECT id, title, author, forum, message, slug, votes, created 
 							FROM Thread 
@@ -164,7 +164,6 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 			querySelectResult, err = t.connectionDB.Query(querySelect, slug)
 		}
 	} else {
-		log.Println(desc)
 		if lengthSince != 0 && limit != 0 {
 			querySelect = `	SELECT id, title, author, forum, message, slug, votes, created 
 							FROM Thread 
