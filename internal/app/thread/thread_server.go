@@ -26,6 +26,7 @@ func Run(connectionDB *sql.DB) *Service {
 	router := mux.NewRouter()
 	router.HandleFunc(fmt.Sprintf("/api/thread/{%s:.+}/create", consts.ThreadSlugPath), threadDelivery.CreateThreadPosts)
 	router.HandleFunc(fmt.Sprintf("/api/thread/{%s:.+}/details", consts.ThreadSlugPath), threadDelivery.GetThread)
+	router.HandleFunc(fmt.Sprintf("/api/thread/{%s:.+}/vote", consts.ThreadSlugPath), threadDelivery.ThreadVote)
 
 	return &Service {
 		Delivery: threadDelivery,

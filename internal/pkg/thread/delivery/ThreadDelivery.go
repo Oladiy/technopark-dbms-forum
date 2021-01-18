@@ -10,6 +10,7 @@ import (
 	"technopark-dbms-forum/internal/pkg/common/utils"
 	"technopark-dbms-forum/internal/pkg/post"
 	"technopark-dbms-forum/internal/pkg/thread"
+	"technopark-dbms-forum/internal/pkg/vote"
 )
 
 type ThreadDelivery struct {
@@ -86,7 +87,7 @@ func (t *ThreadDelivery) GetThread(w http.ResponseWriter, r *http.Request) {
 		slug = slugOrId
 	}
 
-	response, err := t.ThreadUseCase.GetThread(slug, id, "")
+	response, err := t.ThreadUseCase.GetThread("", id, slug)
 	if err != nil {
 		w.WriteHeader(customErrors.StatusCodes[err])
 		utils.MakeErrorResponse(w, err)
@@ -95,5 +96,50 @@ func (t *ThreadDelivery) GetThread(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, _ := json.Marshal(response)
+	_, _ = w.Write(output)
+}
+
+func (t *ThreadDelivery) ThreadVote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	defer r.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+
+	var slug string
+	var id int
+	slugOrId := vars[consts.ThreadSlugPath]
+
+	id, err := strconv.Atoi(slugOrId)
+	if err != nil {
+		slug = slugOrId
+	}
+
+	v := new(vote.Vote)
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		utils.MakeErrorResponse(w, err)
+		return
+	}
+
+	response, err := t.ThreadUseCase.ThreadVote(id, slug, v)
+	if err != nil {
+		if response != nil {
+			w.WriteHeader(customErrors.StatusCodes[err])
+			output, _ := json.Marshal(response)
+			_, _ = w.Write(output)
+		} else {
+			utils.MakeErrorResponse(w, err)
+		}
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	output, _ := json.Marshal(*response)
 	_, _ = w.Write(output)
 }

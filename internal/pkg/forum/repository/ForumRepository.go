@@ -121,8 +121,6 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *thread.Req
 		return th, customErrors.ThreadAlreadyExists
 	}
 
-	(*th).Forum = slug
-
 	return th, nil
 }
 
