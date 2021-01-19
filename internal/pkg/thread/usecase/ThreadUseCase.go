@@ -45,3 +45,24 @@ func (t *ThreadUseCase) ThreadVote(threadId int, threadSlug string, userVote *vo
 
 	return t.ThreadRepository.ThreadVote(threadId, threadSlug, userVote)
 }
+
+func (t *ThreadUseCase) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]post.Post, error) {
+	th, err := t.GetThread("", threadId, threadSlug)
+	if err != nil {
+		return nil, customErrors.ThreadSlugNotFound
+	}
+
+	threadId = th.Id
+
+	return t.ThreadRepository.GetThreadPosts(threadId, threadSlug, limit, since, sort, desc)
+}
+
+func (t *ThreadUseCase) UpdateThread(threadId int, threadSlug string, threadToUpdate *thread.RequestBody) (*thread.Thread, error) {
+	th, err := t.GetThread("", threadId, threadSlug)
+	if err != nil {
+		return nil, customErrors.ThreadSlugNotFound
+	}
+	threadId = th.Id
+
+	return t.ThreadRepository.UpdateThread(threadId, threadToUpdate)
+}

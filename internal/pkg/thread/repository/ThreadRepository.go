@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/post"
@@ -227,4 +228,154 @@ func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote 
 	}
 
 	return th, nil
+}
+
+func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *thread.RequestBody) (*thread.Thread, error) {
+	var selection *sql.Row
+	isFirst := true
+	fieldsToUpdate := make([]interface{}, 0)
+
+	queryUpdate := `UPDATE Thread
+					SET `
+
+	counter := 1
+	if len(threadToUpdate.Title) != 0 {
+		queryUpdate += fmt.Sprintf("title = $%d ", counter)
+		isFirst = false
+		fieldsToUpdate = append(fieldsToUpdate, threadToUpdate.Title)
+		counter++
+	}
+
+	if len(threadToUpdate.Message) != 0 {
+		if isFirst {
+			queryUpdate += fmt.Sprintf("message = $%d ", counter)
+			queryUpdate += `message = $2 `
+		} else {
+			queryUpdate += fmt.Sprintf(", message = $%d ", counter)
+		}
+
+		counter++
+		fieldsToUpdate = append(fieldsToUpdate, threadToUpdate.Message)
+	}
+	queryUpdate += fmt.Sprintf("WHERE id = $%d ", counter)
+
+	fieldsToUpdate = append(fieldsToUpdate, threadId)
+	queryUpdate += `RETURNING author, created, forum, id, message, slug, title, votes;`
+	selection = t.connectionDB.QueryRow(queryUpdate, fieldsToUpdate...)
+
+	th := new(thread.Thread)
+	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
+	if selection.Err() != nil || err != nil {
+		log.Println(err)
+		return nil, customErrors.IncorrectInputData
+	}
+
+	return th, nil
+}
+
+func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]post.Post, error) {
+	querySelect := `SELECT id, parent, author, message, isEdited, forum, thread, created
+					FROM Post
+					WHERE thread = $1 `
+	switch sort {
+	case "tree":
+		if since > 0 {
+			if desc {
+				querySelect += `AND path < (SELECT path FROM Post WHERE id = $2)
+								ORDER BY path DESC `
+			} else {
+				querySelect += `AND path > (SELECT path FROM Post WHERE id = $2)
+								ORDER BY path `
+			}
+		} else {
+			if desc {
+				querySelect += `AND path[1] > $2
+							ORDER BY path DESC `
+			} else {
+				querySelect += `AND path[1] > $2
+							ORDER BY path `
+			}
+		}
+		querySelect += "LIMIT $3 "
+		break
+	case "parent_tree":
+		if since > 0 {
+			if desc {
+				querySelect += `AND path[1] 
+								IN (SELECT path[1] 
+									FROM Post 
+									WHERE thread = $1 AND parent = 0 AND path[1] < (SELECT path[1] 
+																					FROM Post 
+																					WHERE id = $2)
+									ORDER BY path[1] DESC 
+									LIMIT $3)
+								ORDER BY path[1] DESC, path`
+			} else {
+				querySelect += `AND path[1] 
+								IN (SELECT path[1] 
+									FROM Post 
+									WHERE thread = $1 AND parent = 0 AND path[1] > (SELECT path[1] 
+																					FROM Post 
+																					WHERE id = $2)
+									ORDER BY path[1] 
+									LIMIT $3)
+								ORDER BY path[1], path`
+			}
+		} else {
+			if desc {
+				querySelect += `AND path[1] > $2 AND path[1] 
+								IN (SELECT path[1]
+									FROM Post
+									WHERE thread = $1 and id > $2 AND parent = 0
+									ORDER BY path[1] DESC
+									LIMIT $3)
+								ORDER BY path[1] DESC, path`
+			} else {
+				querySelect += `AND path[1] > $2 AND path[1] 
+								IN (SELECT path[1]
+									FROM Post
+									WHERE thread = $1 and id > $2 AND parent = 0
+									ORDER BY path[1] 
+									LIMIT $3)
+								ORDER BY path[1], path`
+			}
+		}
+		break
+	default:
+		if since > 0 {
+			if desc {
+				querySelect += `AND id < $2
+								ORDER BY created DESC, id DESC `
+			} else {
+				querySelect += `AND id > $2
+								ORDER BY created, id `
+			}
+		} else {
+			if desc {
+				querySelect += `AND id > $2
+								ORDER BY created DESC, id DESC `
+			} else {
+				querySelect += `AND id > $2
+								ORDER BY created, id `
+			}
+		}
+		querySelect += "LIMIT $3 "
+	}
+
+	querySelectResult, err := t.connectionDB.Query(querySelect, threadId, since, limit)
+	if err != nil || querySelectResult == nil {
+		return nil, customErrors.ThreadSlugNotFound
+	}
+
+	selection := make([]post.Post, 0)
+	for querySelectResult.Next() {
+		p := new(post.Post)
+		err = querySelectResult.Scan(&p.Id, &p.Parent, &p.Author, &p.Message, &p.IsEdited, &p.Forum, &p.Thread, &p.Created)
+		if err != nil {
+			return nil, err
+		}
+		selection = append(selection, *p)
+	}
+
+	return &selection, nil
 }
