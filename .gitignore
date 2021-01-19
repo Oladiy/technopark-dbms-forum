@@ -1,0 +1,6 @@
+tech-db-forum
+report.html
+swagger.yml
+.idea
+build/main.Dockerfile
+docker-compose.yml
