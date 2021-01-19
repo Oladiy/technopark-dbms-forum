@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS citext;
 
 SET timezone = 'Europe/Moscow';
 
-CREATE TABLE Users (
+CREATE UNLOGGED TABLE Users (
     id SERIAL PRIMARY KEY,
     nickname citext NOT NULL UNIQUE,
     fullname VARCHAR(256) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
-CREATE TABLE Forum (
+CREATE UNLOGGED TABLE Forum (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
     author citext NOT NULL,
@@ -19,14 +19,14 @@ CREATE TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
-CREATE TABLE ForumUsers (
+CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
     forum_slug citext NOT NULL REFERENCES Forum(slug),
     user_nickname citext NOT NULL REFERENCES Users(nickname),
     UNIQUE(forum_slug, user_nickname)
 );
 
-CREATE TABLE Thread (
+CREATE UNLOGGED TABLE Thread (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
     author citext NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE Thread (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
-CREATE TABLE Post (
+CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
     parent INTEGER DEFAULT 0,
     author citext NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE Post (
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
 
-CREATE TABLE Vote (
+CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,
     nickname citext NOT NULL,
     voice INTEGER NOT NULL
