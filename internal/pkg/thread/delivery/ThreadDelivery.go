@@ -8,10 +8,10 @@ import (
 	"technopark-dbms-forum/internal/pkg/common/consts"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/common/utils"
-	"technopark-dbms-forum/internal/pkg/post/models"
+	postModel "technopark-dbms-forum/internal/pkg/post/models"
 	"technopark-dbms-forum/internal/pkg/thread"
-	models2 "technopark-dbms-forum/internal/pkg/thread/models"
-	models3 "technopark-dbms-forum/internal/pkg/vote/models"
+	threadModel "technopark-dbms-forum/internal/pkg/thread/models"
+	voteModel "technopark-dbms-forum/internal/pkg/vote/models"
 )
 
 type ThreadDelivery struct {
@@ -45,7 +45,7 @@ func (t *ThreadDelivery) CreateThreadPosts(w http.ResponseWriter, r *http.Reques
 		slug = slugOrId
 	}
 
-	requestBody := make([]models.RequestBody, 0)
+	requestBody := make([]postModel.RequestBody, 0)
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return
@@ -121,7 +121,7 @@ func (t *ThreadDelivery) ThreadVote(w http.ResponseWriter, r *http.Request) {
 		slug = slugOrId
 	}
 
-	v := new(models3.Vote)
+	v := new(	voteModel.Vote)
 	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return
@@ -236,7 +236,7 @@ func (t *ThreadDelivery) UpdateThread(w http.ResponseWriter, r *http.Request) {
 		slug = slugOrId
 	}
 
-	threadToUpdate := new(models2.RequestBody)
+	threadToUpdate := new(threadModel.RequestBody)
 	if err := json.NewDecoder(r.Body).Decode(&threadToUpdate); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return

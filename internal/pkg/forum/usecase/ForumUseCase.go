@@ -4,11 +4,11 @@ import (
 	"regexp"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/forum"
-	models3 "technopark-dbms-forum/internal/pkg/forum/models"
+	forumModel "technopark-dbms-forum/internal/pkg/forum/models"
 	"technopark-dbms-forum/internal/pkg/thread"
-	"technopark-dbms-forum/internal/pkg/thread/models"
+	threadModel "technopark-dbms-forum/internal/pkg/thread/models"
 	"technopark-dbms-forum/internal/pkg/user"
-	models2 "technopark-dbms-forum/internal/pkg/user/models"
+	userModel "technopark-dbms-forum/internal/pkg/user/models"
 )
 
 type ForumUseCase struct {
@@ -25,7 +25,7 @@ func NewForumUseCase(forumRepository forum.Repository, threadRepository thread.R
 	}
 }
 
-func (t *ForumUseCase) CreateForum(requestBody *models3.RequestBody) (*models3.Forum, error) {
+func (t *ForumUseCase) CreateForum(requestBody *forumModel.RequestBody) (*forumModel.Forum, error) {
 	u, err := t.UserRepository.GetUserProfile(requestBody.User)
 
 	if err != nil || u == nil {
@@ -42,7 +42,7 @@ func (t *ForumUseCase) CreateForum(requestBody *models3.RequestBody) (*models3.F
 	return t.ForumRepository.CreateForum(requestBody)
 }
 
-func (t *ForumUseCase) GetForumDetails(slug string) (*models3.Forum, error) {
+func (t *ForumUseCase) GetForumDetails(slug string) (*forumModel.Forum, error) {
 	if len(slug) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
@@ -50,7 +50,7 @@ func (t *ForumUseCase) GetForumDetails(slug string) (*models3.Forum, error) {
 	return t.ForumRepository.GetForumDetails(slug)
 }
 
-func (t *ForumUseCase) GetForumThreads(slug string, limit int, since string, desc bool) (*[]models.Thread, error) {
+func (t *ForumUseCase) GetForumThreads(slug string, limit int, since string, desc bool) (*[]threadModel.Thread, error) {
 	if len(slug) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
@@ -63,7 +63,7 @@ func (t *ForumUseCase) GetForumThreads(slug string, limit int, since string, des
 	return t.ForumRepository.GetForumThreads(slug, limit, since, desc)
 }
 
-func (t *ForumUseCase) CreateForumThread(slug string, requestBody *models.RequestBody) (*models.Thread, error) {
+func (t *ForumUseCase) CreateForumThread(slug string, requestBody *threadModel.RequestBody) (*threadModel.Thread, error) {
 	u, err := t.UserRepository.GetUserProfile(requestBody.Author)
 	if err != nil || u == nil {
 		return nil, customErrors.ThreadUserNotFound
@@ -89,7 +89,7 @@ func (t *ForumUseCase) CreateForumThread(slug string, requestBody *models.Reques
 	return t.ForumRepository.CreateForumThread(slug, requestBody)
 }
 
-func (t *ForumUseCase) GetForumUsers(slug string, limit int, since string, desc bool) (*[]models2.User, error) {
+func (t *ForumUseCase) GetForumUsers(slug string, limit int, since string, desc bool) (*[]userModel.User, error) {
 	_, err := t.GetForumDetails(slug)
 	if err != nil {
 		return nil, customErrors.ForumSlugNotFound

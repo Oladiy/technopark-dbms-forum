@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
-	"technopark-dbms-forum/internal/pkg/post/models"
-	models2 "technopark-dbms-forum/internal/pkg/thread/models"
-	models3 "technopark-dbms-forum/internal/pkg/vote/models"
+	postModel "technopark-dbms-forum/internal/pkg/post/models"
+	threadModel "technopark-dbms-forum/internal/pkg/thread/models"
+	voteModel "technopark-dbms-forum/internal/pkg/vote/models"
 	"time"
 )
 
@@ -21,9 +21,9 @@ func NewThreadRepository(connectionDB *sql.DB) *ThreadRepository {
 	}
 }
 
-func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, posts *[]models.RequestBody) (*[]models.Post, error) {
+func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, posts *[]postModel.RequestBody) (*[]postModel.Post, error) {
 	queryInsert := `INSERT INTO Post (parent, author, message, forum, thread, created) VALUES %s`
-	selection := make([]models.Post, 0)
+	selection := make([]postModel.Post, 0)
 
 	values := make([]interface{}, 0)
 	queries := make([]string, 0)
@@ -51,7 +51,7 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 	}
 
 	for index := 0; queryInsertResult.Next(); index++ {
-		p := new(models.Post)
+		p := new(postModel.Post)
 		_ = queryInsertResult.Scan(&p.Id, &p.Created)
 		p.Author = (*posts)[index].Author
 		p.Message = (*posts)[index].Message
@@ -64,7 +64,7 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 	return &selection, nil
 }
 
-func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*models2.Thread, error) {
+func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*threadModel.Thread, error) {
 	var querySelect string
 	var selection *sql.Row
 
@@ -89,7 +89,7 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
-	th := new(models2.Thread)
+	th := new(threadModel.Thread)
 	if err := selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Votes, &th.Slug, &th.Created); err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
@@ -97,7 +97,7 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 	return th, nil
 }
 
-func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote *models3.Vote) (*models2.Thread, error) {
+func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote *voteModel.Vote) (*threadModel.Thread, error) {
 	var querySelectThread string
 	var queryUpdateThread string
 	var selection *sql.Row
@@ -112,9 +112,9 @@ func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote 
 								FROM Thread 
 								WHERE id = $1;`
 	}
-	th := new(models2.Thread)
+	th := new(threadModel.Thread)
 
-	v := new(models3.Vote)
+	v := new(voteModel.Vote)
 	querySelectVote := `SELECT nickname, voice
 						FROM Vote
 						WHERE nickname = $1;`
@@ -236,7 +236,7 @@ func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote 
 	return th, nil
 }
 
-func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.RequestBody) (*models2.Thread, error) {
+func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *threadModel.RequestBody) (*threadModel.Thread, error) {
 	var selection *sql.Row
 	isFirst := true
 	fieldsToUpdate := make([]interface{}, 0)
@@ -268,7 +268,7 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.Re
 	queryUpdate += `RETURNING author, created, forum, id, message, slug, title, votes;`
 	selection = t.connectionDB.QueryRow(queryUpdate, fieldsToUpdate...)
 
-	th := new(models2.Thread)
+	th := new(threadModel.Thread)
 	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 	if selection.Err() != nil || err != nil {
 		return nil, customErrors.IncorrectInputData
@@ -277,7 +277,7 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.Re
 	return th, nil
 }
 
-func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]models.Post, error) {
+func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
 	querySelect := `SELECT id, parent, author, message, isEdited, forum, thread, created
 					FROM Post
 					WHERE thread = $1 `
@@ -371,9 +371,9 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
-	selection := make([]models.Post, 0)
+	selection := make([]postModel.Post, 0)
 	for querySelectResult.Next() {
-		p := new(models.Post)
+		p := new(postModel.Post)
 		err = querySelectResult.Scan(&p.Id, &p.Parent, &p.Author, &p.Message, &p.IsEdited, &p.Forum, &p.Thread, &p.Created)
 		if err != nil {
 			return nil, err
