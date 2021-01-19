@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	databaseService "technopark-dbms-forum/internal/app/database_service"
 	"technopark-dbms-forum/internal/app/forum"
 	"technopark-dbms-forum/internal/app/post"
 	"technopark-dbms-forum/internal/app/thread"
@@ -15,6 +16,7 @@ import (
 )
 
 type ServerConfig struct {
+	DatabaseService *databaseService.Service
 	ForumService	*forum.Service
 	PostService		*post.Service
 	ThreadService 	*thread.Service
@@ -56,6 +58,7 @@ func configureMainRouter(application *ServerConfig) http.Handler{
 
 	handler.Handle("/api/forum/", application.ForumService.Router)
 	handler.Handle("/api/post/", application.PostService.Router)
+	handler.Handle("/api/service/", application.DatabaseService.Router)
 	handler.Handle("/api/thread/", application.ThreadService.Router)
 	handler.Handle("/api/user/", application.UserService.Router)
 
@@ -65,14 +68,16 @@ func configureMainRouter(application *ServerConfig) http.Handler{
 func InitService(connectionDB *sql.DB) *ServerConfig{
 	forumService 	:= forum.Run(connectionDB)
 	postService 	:= post.Run(connectionDB)
+	dbService		:= databaseService.Run(connectionDB)
 	threadService 	:= thread.Run(connectionDB)
 	userService 	:= user.Run(connectionDB)
 
 	return &ServerConfig{
-		ForumService:	forumService,
-		PostService: 	postService,
-		ThreadService:	threadService,
-		UserService:   	userService,
+		DatabaseService: 	dbService,
+		ForumService:		forumService,
+		PostService: 		postService,
+		ThreadService:		threadService,
+		UserService:   		userService,
 	}
 }
 

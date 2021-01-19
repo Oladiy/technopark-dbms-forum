@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/post/models"
@@ -41,7 +40,6 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 
 	queryInsertResult, err := t.connectionDB.Query(queryInsert, values...)
 	if err != nil {
-		log.Println("ОШИБКА: ", err, "; result: ", queryInsertResult)
 		if err.Error() == `pq: insert or update on table "forumusers" violates foreign key constraint "forumusers_user_nickname_fkey"` {
 			return nil, customErrors.PostNotFound
 		}
@@ -257,7 +255,6 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.Re
 	if len(threadToUpdate.Message) != 0 {
 		if isFirst {
 			queryUpdate += fmt.Sprintf("message = $%d ", counter)
-			queryUpdate += `message = $2 `
 		} else {
 			queryUpdate += fmt.Sprintf(", message = $%d ", counter)
 		}
@@ -274,7 +271,6 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.Re
 	th := new(models2.Thread)
 	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 	if selection.Err() != nil || err != nil {
-		log.Println(err)
 		return nil, customErrors.IncorrectInputData
 	}
 

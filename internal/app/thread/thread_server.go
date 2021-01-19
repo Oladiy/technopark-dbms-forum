@@ -10,6 +10,7 @@ import (
 	"technopark-dbms-forum/internal/pkg/thread/delivery"
 	"technopark-dbms-forum/internal/pkg/thread/repository"
 	"technopark-dbms-forum/internal/pkg/thread/usecase"
+	userRep "technopark-dbms-forum/internal/pkg/user/repository"
 )
 
 type Service struct {
@@ -20,8 +21,9 @@ type Service struct {
 }
 
 func Run(connectionDB *sql.DB) *Service {
+	userRepository := userRep.NewUserRepository(connectionDB)
 	threadRepository := repository.NewThreadRepository(connectionDB)
-	threadUseCase := usecase.NewThreadUseCase(threadRepository)
+	threadUseCase := usecase.NewThreadUseCase(threadRepository, userRepository)
 	threadDelivery := delivery.NewThreadDelivery(threadUseCase)
 
 	router := mux.NewRouter()

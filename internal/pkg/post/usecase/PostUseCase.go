@@ -55,5 +55,9 @@ func (t *PostUseCase) UpdatePost(id int, message string) (*models.Post, error) {
 		return nil, customErrors.PostNotFound
 	}
 
+	if len(message) == 0 || message == p.Message {
+		return p, nil
+	}
+
 	return t.PostRepository.UpdatePost(id, message)
 }

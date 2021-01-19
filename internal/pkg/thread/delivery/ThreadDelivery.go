@@ -129,8 +129,8 @@ func (t *ThreadDelivery) ThreadVote(w http.ResponseWriter, r *http.Request) {
 
 	response, err := t.ThreadUseCase.ThreadVote(id, slug, v)
 	if err != nil {
+		w.WriteHeader(customErrors.StatusCodes[err])
 		if response != nil {
-			w.WriteHeader(customErrors.StatusCodes[err])
 			output, _ := json.Marshal(response)
 			_, _ = w.Write(output)
 		} else {
