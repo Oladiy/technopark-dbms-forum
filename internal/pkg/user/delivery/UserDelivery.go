@@ -8,6 +8,7 @@ import (
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/common/utils"
 	"technopark-dbms-forum/internal/pkg/user"
+	"technopark-dbms-forum/internal/pkg/user/models"
 )
 
 type UserDelivery struct {
@@ -30,7 +31,7 @@ func (t *UserDelivery) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	nickname := vars[consts.UserNickNamePath]
-	requestBody := new(user.RequestBody)
+	requestBody := new(models.RequestBody)
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return
@@ -87,7 +88,7 @@ func (t *UserDelivery) UpdateUserProfile(w http.ResponseWriter, r *http.Request)
 
 	vars := mux.Vars(r)
 	nickname := vars[consts.UserNickNamePath]
-	requestBody := new(user.RequestBody)
+	requestBody := new(models.RequestBody)
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return

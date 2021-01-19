@@ -9,7 +9,9 @@ import (
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/common/utils"
 	"technopark-dbms-forum/internal/pkg/forum"
+	models2 "technopark-dbms-forum/internal/pkg/forum/models"
 	"technopark-dbms-forum/internal/pkg/thread"
+	"technopark-dbms-forum/internal/pkg/thread/models"
 )
 
 type ForumDelivery struct {
@@ -31,7 +33,7 @@ func (t *ForumDelivery) CreateForum(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	requestBody := new(forum.RequestBody)
+	requestBody := new(models2.RequestBody)
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return
@@ -88,7 +90,7 @@ func (t *ForumDelivery) CreateForumThread(w http.ResponseWriter, r *http.Request
 
 	vars := mux.Vars(r)
 	slug := vars[consts.ForumSlugPath]
-	requestBody := new(thread.RequestBody)
+	requestBody := new(models.RequestBody)
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return

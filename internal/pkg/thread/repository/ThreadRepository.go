@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
-	"technopark-dbms-forum/internal/pkg/post"
-	"technopark-dbms-forum/internal/pkg/thread"
-	"technopark-dbms-forum/internal/pkg/vote"
+	"technopark-dbms-forum/internal/pkg/post/models"
+	models2 "technopark-dbms-forum/internal/pkg/thread/models"
+	models3 "technopark-dbms-forum/internal/pkg/vote/models"
 	"time"
 )
 
@@ -22,9 +22,9 @@ func NewThreadRepository(connectionDB *sql.DB) *ThreadRepository {
 	}
 }
 
-func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, posts *[]post.RequestBody) (*[]post.Post, error) {
+func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, posts *[]models.RequestBody) (*[]models.Post, error) {
 	queryInsert := `INSERT INTO Post (parent, author, message, forum, thread, created) VALUES %s`
-	selection := make([]post.Post, 0)
+	selection := make([]models.Post, 0)
 
 	values := make([]interface{}, 0)
 	queries := make([]string, 0)
@@ -41,11 +41,19 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 
 	queryInsertResult, err := t.connectionDB.Query(queryInsert, values...)
 	if err != nil {
+		log.Println("ОШИБКА: ", err, "; result: ", queryInsertResult)
+		if err.Error() == `pq: insert or update on table "forumusers" violates foreign key constraint "forumusers_user_nickname_fkey"` {
+			return nil, customErrors.PostNotFound
+		}
+		if queryInsertResult == nil {
+			return nil, customErrors.ThreadParentConflict
+		}
+
 		return nil, customErrors.IncorrectInputData
 	}
 
 	for index := 0; queryInsertResult.Next(); index++ {
-		p := new(post.Post)
+		p := new(models.Post)
 		_ = queryInsertResult.Scan(&p.Id, &p.Created)
 		p.Author = (*posts)[index].Author
 		p.Message = (*posts)[index].Message
@@ -58,7 +66,7 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 	return &selection, nil
 }
 
-func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*thread.Thread, error) {
+func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*models2.Thread, error) {
 	var querySelect string
 	var selection *sql.Row
 
@@ -83,7 +91,7 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
-	th := new(thread.Thread)
+	th := new(models2.Thread)
 	if err := selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Votes, &th.Slug, &th.Created); err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
@@ -91,7 +99,7 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 	return th, nil
 }
 
-func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote *vote.Vote) (*thread.Thread, error) {
+func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote *models3.Vote) (*models2.Thread, error) {
 	var querySelectThread string
 	var queryUpdateThread string
 	var selection *sql.Row
@@ -106,9 +114,9 @@ func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote 
 								FROM Thread 
 								WHERE id = $1;`
 	}
-	th := new(thread.Thread)
+	th := new(models2.Thread)
 
-	v := new(vote.Vote)
+	v := new(models3.Vote)
 	querySelectVote := `SELECT nickname, voice
 						FROM Vote
 						WHERE nickname = $1;`
@@ -230,7 +238,7 @@ func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote 
 	return th, nil
 }
 
-func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *thread.RequestBody) (*thread.Thread, error) {
+func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *models2.RequestBody) (*models2.Thread, error) {
 	var selection *sql.Row
 	isFirst := true
 	fieldsToUpdate := make([]interface{}, 0)
@@ -263,7 +271,7 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *thread.Req
 	queryUpdate += `RETURNING author, created, forum, id, message, slug, title, votes;`
 	selection = t.connectionDB.QueryRow(queryUpdate, fieldsToUpdate...)
 
-	th := new(thread.Thread)
+	th := new(models2.Thread)
 	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 	if selection.Err() != nil || err != nil {
 		log.Println(err)
@@ -273,7 +281,7 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *thread.Req
 	return th, nil
 }
 
-func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]post.Post, error) {
+func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]models.Post, error) {
 	querySelect := `SELECT id, parent, author, message, isEdited, forum, thread, created
 					FROM Post
 					WHERE thread = $1 `
@@ -367,9 +375,9 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
-	selection := make([]post.Post, 0)
+	selection := make([]models.Post, 0)
 	for querySelectResult.Next() {
-		p := new(post.Post)
+		p := new(models.Post)
 		err = querySelectResult.Scan(&p.Id, &p.Parent, &p.Author, &p.Message, &p.IsEdited, &p.Forum, &p.Thread, &p.Created)
 		if err != nil {
 			return nil, err

@@ -12,8 +12,11 @@ var (
 
 		IncorrectInputData:      http.StatusBadRequest,
 
+		PostNotFound: 			 http.StatusNotFound,
+
 		ThreadAlreadyExists:	 http.StatusConflict,
 		ThreadForumNotFound: 	 http.StatusNotFound,
+		ThreadParentConflict: 	 http.StatusConflict,
 		ThreadParentNotFound: 	 http.StatusConflict,
 		ThreadSlugNotFound:		 http.StatusNotFound,
 		ThreadUserNotFound: 	 http.StatusNotFound,

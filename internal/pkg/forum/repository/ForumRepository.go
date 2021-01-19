@@ -2,11 +2,10 @@ package repository
 
 import (
 	"database/sql"
-	"log"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
-	"technopark-dbms-forum/internal/pkg/forum"
-	"technopark-dbms-forum/internal/pkg/thread"
-	"technopark-dbms-forum/internal/pkg/user"
+	models3 "technopark-dbms-forum/internal/pkg/forum/models"
+	"technopark-dbms-forum/internal/pkg/thread/models"
+	models2 "technopark-dbms-forum/internal/pkg/user/models"
 )
 
 type ForumRepository struct {
@@ -19,14 +18,14 @@ func NewForumRepository(connectionDB *sql.DB) *ForumRepository {
 	}
 }
 
-func (t *ForumRepository) CreateForum(requestBody *forum.RequestBody) (*forum.Forum, error) {
+func (t *ForumRepository) CreateForum(requestBody *models3.RequestBody) (*models3.Forum, error) {
 	queryInsert := `INSERT INTO Forum (title, author, slug) 
 					VALUES($1, $2, $3) 
 					returning title, author, slug;`
 	querySelect := `SELECT title, author, slug, posts, threads 
 					FROM Forum 
 					WHERE slug = $1;`
-	f := new(forum.Forum)
+	f := new(models3.Forum)
 
 	row := t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.User, requestBody.Slug)
 	err := row.Scan(&f.Title, &f.User, &f.Slug)
@@ -43,7 +42,7 @@ func (t *ForumRepository) CreateForum(requestBody *forum.RequestBody) (*forum.Fo
 	return f, nil
 }
 
-func (t *ForumRepository) GetForumDetails(slug string) (*forum.Forum, error) {
+func (t *ForumRepository) GetForumDetails(slug string) (*models3.Forum, error) {
 	querySelect := `SELECT title, author, slug, posts, threads 
 					FROM Forum 
 					WHERE slug = $1;`
@@ -52,7 +51,7 @@ func (t *ForumRepository) GetForumDetails(slug string) (*forum.Forum, error) {
 		return nil, customErrors.ForumSlugNotFound
 	}
 
-	f := new(forum.Forum)
+	f := new(models3.Forum)
 	if err := selection.Scan(&f.Title, &f.User, &f.Slug, &f.Posts, &f.Threads); err != nil {
 		return nil, customErrors.ForumSlugNotFound
 	}
@@ -60,7 +59,7 @@ func (t *ForumRepository) GetForumDetails(slug string) (*forum.Forum, error) {
 	return f, nil
 }
 
-func (t *ForumRepository) CreateForumThread(slug string, requestBody *thread.RequestBody) (*thread.Thread, error) {
+func (t *ForumRepository) CreateForumThread(slug string, requestBody *models.RequestBody) (*models.Thread, error) {
 	var queryInsert string
 	var querySelect string
 	var row *sql.Row
@@ -68,7 +67,7 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *thread.Req
 
 	lengthRBCreated := len(requestBody.Created)
 	lengthRBSlug := len(requestBody.Slug)
-	th := new(thread.Thread)
+	th := new(models.Thread)
 
 	if lengthRBCreated != 0 && lengthRBSlug != 0 {
 		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug, created) 
@@ -126,12 +125,12 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *thread.Req
 	return th, nil
 }
 
-func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, desc bool) (*[]thread.Thread, error) {
+func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, desc bool) (*[]models.Thread, error) {
 	var querySelect string
 	var querySelectResult *sql.Rows
 	var err error
 
-	selection := make([]thread.Thread, 0)
+	selection := make([]models.Thread, 0)
 	lengthSince := len(since)
 
 	if desc {
@@ -199,7 +198,7 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 	}
 
 	for querySelectResult.Next() {
-		t := new(thread.Thread)
+		t := new(models.Thread)
 		_ = querySelectResult.Scan(&t.Id, &t.Title, &t.Author, &t.Forum, &t.Message, &t.Slug, &t.Votes, &t.Created)
 		selection = append(selection, *t)
 	}
@@ -211,13 +210,8 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 	return &selection, nil
 }
 
-func (t *ForumRepository) GetForumUsers(slug string, limit int, since string, desc bool) (*[]user.User, error) {
+func (t *ForumRepository) GetForumUsers(slug string, limit int, since string, desc bool) (*[]models2.User, error) {
 	var querySelect string
-
-	log.Println("slug: ", slug)
-	log.Println("limit: ", limit)
-	log.Println("since: ", since)
-	log.Println("desc: ", desc)
 
 	if len(since) != 0 && !desc {
 		querySelect = `SELECT nickname, fullname, about, email
@@ -246,10 +240,10 @@ func (t *ForumRepository) GetForumUsers(slug string, limit int, since string, de
 		return nil, customErrors.ForumSlugNotFound
 	}
 
-	selection := make([]user.User, 0)
+	selection := make([]models2.User, 0)
 
 	for querySelectResult.Next() {
-		u := new(user.User)
+		u := new(models2.User)
 		_ = querySelectResult.Scan(&u.Nickname, &u.FullName, &u.About, &u.Email)
 		selection = append(selection, *u)
 	}

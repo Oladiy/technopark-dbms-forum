@@ -3,6 +3,7 @@ package usecase
 import (
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/user"
+	"technopark-dbms-forum/internal/pkg/user/models"
 )
 
 type UserUseCase struct {
@@ -15,7 +16,7 @@ func NewUserUseCase(userRepository user.Repository) *UserUseCase {
 	}
 }
 
-func (t* UserUseCase) CreateUser(nickname string, profile *user.RequestBody) (*[]user.User, error) {
+func (t* UserUseCase) CreateUser(nickname string, profile *models.RequestBody) (*[]models.User, error) {
 	if len(nickname) == 0 || len(profile.Email) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
@@ -23,7 +24,7 @@ func (t* UserUseCase) CreateUser(nickname string, profile *user.RequestBody) (*[
 	return t.UserRepository.CreateUser(nickname, profile)
 }
 
-func (t* UserUseCase) GetUserProfile(nickname string) (*user.User, error) {
+func (t* UserUseCase) GetUserProfile(nickname string) (*models.User, error) {
 	if len(nickname) == 0 {
 		return nil, customErrors.IncorrectInputData
 	}
@@ -31,7 +32,7 @@ func (t* UserUseCase) GetUserProfile(nickname string) (*user.User, error) {
 	return t.UserRepository.GetUserProfile(nickname)
 }
 
-func (t* UserUseCase) UpdateUserProfile(nickname string, profile *user.RequestBody) (*user.User, error) {
+func (t* UserUseCase) UpdateUserProfile(nickname string, profile *models.RequestBody) (*models.User, error) {
 	userRelevant, err := t.UserRepository.GetUserProfile(nickname)
 	if err != nil {
 		switch err {
