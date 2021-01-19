@@ -33,6 +33,7 @@ func Run(connectionDB *sql.DB) *Service {
 	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/details", consts.ForumSlugPath), forumDelivery.GetForumDetails).Methods(http.MethodGet)
 	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/create", consts.ForumSlugPath), forumDelivery.CreateForumThread)
 	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/threads", consts.ForumSlugPath), forumDelivery.GetForumThreads)
+	router.HandleFunc(fmt.Sprintf("/api/forum/{%s:.+}/users", consts.ForumSlugPath), forumDelivery.GetForumUsers)
 
 	return &Service {
 		Delivery: forumDelivery,

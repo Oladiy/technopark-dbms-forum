@@ -157,3 +157,50 @@ func (t *ForumDelivery) GetForumThreads(w http.ResponseWriter, r *http.Request) 
 	output, _ := json.Marshal(response)
 	_, _ = w.Write(output)
 }
+
+func (t *ForumDelivery) GetForumUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var limit int
+	var since string
+	var desc bool
+	var err error
+
+	vars := mux.Vars(r)
+	slug := vars[consts.ForumSlugPath]
+
+	limit = 100
+	parameterLimit, ok := r.URL.Query()["limit"]
+	if ok && len(parameterLimit[0]) > 0 {
+		limit, err = strconv.Atoi(parameterLimit[0])
+		if err != nil {
+			limit = 100
+		}
+	}
+	parameterSince, ok := r.URL.Query()["since"]
+	if ok && len(parameterSince[0]) > 0 {
+		since = parameterSince[0]
+	}
+	parameterDesc, ok := r.URL.Query()["desc"]
+	if ok && len(parameterDesc) > 0 {
+		if parameterDesc[0] == "true" {
+			desc = true
+		}
+	}
+
+	response, err := t.ForumUseCase.GetForumUsers(slug, limit, since, desc)
+	if err != nil {
+		w.WriteHeader(customErrors.StatusCodes[err])
+		utils.MakeErrorResponse(w, err)
+
+		return
+	}
+
+	output, _ := json.Marshal(response)
+	_, _ = w.Write(output)
+}

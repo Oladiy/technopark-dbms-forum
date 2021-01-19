@@ -2,9 +2,11 @@ package repository
 
 import (
 	"database/sql"
+	"log"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/forum"
 	"technopark-dbms-forum/internal/pkg/thread"
+	"technopark-dbms-forum/internal/pkg/user"
 )
 
 type ForumRepository struct {
@@ -209,3 +211,49 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 	return &selection, nil
 }
 
+func (t *ForumRepository) GetForumUsers(slug string, limit int, since string, desc bool) (*[]user.User, error) {
+	var querySelect string
+
+	log.Println("slug: ", slug)
+	log.Println("limit: ", limit)
+	log.Println("since: ", since)
+	log.Println("desc: ", desc)
+
+	if len(since) != 0 && !desc {
+		querySelect = `SELECT nickname, fullname, about, email
+					FROM ForumUsers fu JOIN Users u ON(fu.user_nickname = u.nickname)
+					WHERE fu.forum_slug = $1 AND u.nickname > $2 COLLATE "C"
+					ORDER BY u.nickname COLLATE "C" `
+	} else if len(since) != 0 {
+		querySelect = `SELECT nickname, fullname, about, email
+					FROM ForumUsers fu JOIN Users u ON(fu.user_nickname = u.nickname)
+					WHERE fu.forum_slug = $1 AND u.nickname < $2 COLLATE "C"
+					ORDER BY u.nickname COLLATE "C" `
+	} else {
+		querySelect = `SELECT nickname, fullname, about, email
+					FROM ForumUsers fu JOIN Users u ON(fu.user_nickname = u.nickname)
+					WHERE fu.forum_slug = $1 AND u.nickname > $2 COLLATE "C"
+					ORDER BY u.nickname COLLATE "C" `
+	}
+
+	if desc {
+		querySelect += "DESC "
+	}
+	querySelect += "LIMIT $3"
+
+	querySelectResult, err := t.connectionDB.Query(querySelect, slug, since, limit)
+	if err != nil {
+		return nil, customErrors.ForumSlugNotFound
+	}
+
+	selection := make([]user.User, 0)
+
+	for querySelectResult.Next() {
+		u := new(user.User)
+		_ = querySelectResult.Scan(&u.Nickname, &u.FullName, &u.About, &u.Email)
+		selection = append(selection, *u)
+	}
+
+	querySelectResult.Close()
+	return &selection, nil
+}

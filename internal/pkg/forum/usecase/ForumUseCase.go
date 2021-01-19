@@ -85,3 +85,12 @@ func (t *ForumUseCase) CreateForumThread(slug string, requestBody *thread.Reques
 
 	return t.ForumRepository.CreateForumThread(slug, requestBody)
 }
+
+func (t *ForumUseCase) GetForumUsers(slug string, limit int, since string, desc bool) (*[]user.User, error) {
+	_, err := t.GetForumDetails(slug)
+	if err != nil {
+		return nil, customErrors.ForumSlugNotFound
+	}
+
+	return t.ForumRepository.GetForumUsers(slug, limit, since, desc)
+}
