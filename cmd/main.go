@@ -86,7 +86,7 @@ func main() {
 
 	config.Domain = ""
 	config.Port = 5000
-	config.DatabaseDomain = "postgresql"
+	config.DatabaseDomain = "localhost"
 	config.DatabasePort = 5432
 	config.DatabaseName = "Forum"
 	config.DatabaseUser = "docker"
