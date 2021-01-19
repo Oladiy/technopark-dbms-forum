@@ -19,6 +19,13 @@ CREATE TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
+CREATE TABLE ForumUsers (
+    id SERIAL PRIMARY KEY,
+    forum_slug citext NOT NULL REFERENCES Forum(slug),
+    user_nickname citext NOT NULL REFERENCES Users(nickname),
+    UNIQUE(forum_slug, user_nickname)
+);
+
 CREATE TABLE Thread (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
@@ -76,3 +83,41 @@ CREATE TRIGGER path_updater
     ON Post
     FOR EACH ROW
 EXECUTE PROCEDURE update_path();
+
+CREATE OR REPLACE FUNCTION update_forum_threads_counter()
+RETURNS TRIGGER AS $update_forum_threads_counter$
+BEGIN
+    UPDATE Forum
+    SET threads = threads + 1
+    WHERE slug = new.forum;
+
+    INSERT INTO ForumUsers(forum_slug, user_nickname)
+    VALUES(new.forum, new.author)
+    ON CONFLICT (forum_slug, user_nickname) DO NOTHING;
+
+    RETURN NEW;
+END;
+$update_forum_threads_counter$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_forum_threads_counter
+    BEFORE INSERT ON Thread
+    FOR EACH ROW EXECUTE PROCEDURE update_forum_threads_counter();
+
+CREATE OR REPLACE FUNCTION update_forum_posts_counter()
+RETURNS TRIGGER AS $update_forum_posts_counter$
+begin
+    UPDATE Forum
+    SET posts = posts + 1
+    WHERE slug = new.forum;
+
+    INSERT INTO ForumUsers(forum_slug, user_nickname)
+    VALUES (new.forum, new.author)
+    ON CONFLICT (forum_slug, user_nickname) DO NOTHING;
+
+    RETURN NEW;
+END;
+$update_forum_posts_counter$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_forum_posts_counter
+    BEFORE INSERT ON Post
+    FOR EACH ROW EXECUTE PROCEDURE update_forum_posts_counter();
