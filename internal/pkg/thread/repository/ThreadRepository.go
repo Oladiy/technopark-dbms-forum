@@ -97,139 +97,90 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 	return th, nil
 }
 
-func (t *ThreadRepository) ThreadVote(threadId int, threadSlug string, userVote *voteModel.Vote) (*threadModel.Thread, error) {
-	var querySelectThread string
+func (t *ThreadRepository) ThreadVote(threadId int, userVote *voteModel.Vote) (*threadModel.Thread, error) {
 	var queryUpdateThread string
 	var selection *sql.Row
 	var err error
 
-	if len(threadSlug) != 0 {
-		querySelectThread = `	SELECT author, created, forum, id, message, slug, title, votes 
-								FROM Thread 
-								WHERE slug = $1;`
-	} else {
-		querySelectThread = `	SELECT author, created, forum, id, message, slug, title, votes 
-								FROM Thread 
-								WHERE id = $1;`
-	}
+	querySelectThread := `	SELECT author, created, forum, id, message, slug, title, votes 
+							FROM Thread 
+							WHERE id = $1;`
 	th := new(threadModel.Thread)
 
 	v := new(voteModel.Vote)
 	querySelectVote := `SELECT nickname, voice
 						FROM Vote
-						WHERE nickname = $1;`
-	selection = t.connectionDB.QueryRow(querySelectVote, userVote.Nickname)
+						WHERE nickname = $1 AND thread = $2;`
+	selection = t.connectionDB.QueryRow(querySelectVote, userVote.Nickname, threadId)
 	err = selection.Scan(&v.Nickname, &v.Voice)
 	if err == nil  {
 		queryUpdateVote := `UPDATE Vote 
 							SET voice = $1 
-							WHERE nickname = $2;`
-		_, err = t.connectionDB.Exec(queryUpdateVote, userVote.Voice, userVote.Nickname)
+							WHERE nickname = $2 AND thread = $3;`
+		_, err = t.connectionDB.Exec(queryUpdateVote, userVote.Voice, userVote.Nickname, threadId)
 		if err != nil {
 			return nil, customErrors.IncorrectInputData
 		}
 
 		if v.Voice == userVote.Voice {
-			if len(threadSlug) != 0 {
-				selection = t.connectionDB.QueryRow(querySelectThread, threadSlug)
-			} else {
-				selection = t.connectionDB.QueryRow(querySelectThread, threadId)
-			}
+			selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
 			err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
-			if selection.Err() != nil || err != nil {
+			if err != nil {
 				return nil, customErrors.ThreadSlugNotFound
 			}
 
 			return th, nil
 		}
 
-		if len(threadSlug) != 0 {
-			if userVote.Voice == 1 {
-				queryUpdateThread = `	UPDATE Thread
-										SET votes = votes + 2
-										WHERE slug = $1;`
-			} else {
-				queryUpdateThread = `	UPDATE Thread
-										SET votes = votes - 2
-										WHERE slug = $1;`
-			}
+		if userVote.Voice == 1 {
+			queryUpdateThread = `	UPDATE Thread
+									SET votes = votes + 2
+									WHERE id = $1;`
 		} else {
-			if userVote.Voice == 1 {
-				queryUpdateThread = `	UPDATE Thread
-										SET votes = votes + 2
-										WHERE id = $1;`
-			} else {
-				queryUpdateThread = `	UPDATE Thread
-										SET votes = votes - 2
-										WHERE id = $1;`
-			}
+			queryUpdateThread = `	UPDATE Thread
+									SET votes = votes - 2
+									WHERE id = $1;`
 		}
 
-		if len(threadSlug) != 0 {
-			if _, err = t.connectionDB.Exec(queryUpdateThread, threadSlug); err != nil {
-				return nil, customErrors.IncorrectInputData
-			}
-			selection = t.connectionDB.QueryRow(querySelectThread, threadSlug)
-		} else {
-			if _, err = t.connectionDB.Exec(queryUpdateThread, threadId); err != nil {
-				return nil, customErrors.IncorrectInputData
-			}
-			selection = t.connectionDB.QueryRow(querySelectThread, threadId)
+		if _, err = t.connectionDB.Exec(queryUpdateThread, threadId); err != nil {
+			return nil, customErrors.IncorrectInputData
 		}
+		selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
 		err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
-		if selection.Err() != nil || err != nil {
+		if err != nil {
 			return nil, customErrors.ThreadSlugNotFound
 		}
 
 		return th, nil
 	}
 
-	if len(threadSlug) != 0 {
-		if userVote.Voice == 1 {
-			queryUpdateThread = `	UPDATE Thread
-									SET votes = votes + 1
-									WHERE slug = $1;`
-		} else {
-			queryUpdateThread = `	UPDATE Thread
-									SET votes = votes - 1
-									WHERE slug = $1;`
-		}
+	if userVote.Voice == 1 {
+		queryUpdateThread = `	UPDATE Thread
+								SET votes = votes + 1
+								WHERE id = $1;`
 	} else {
-		if userVote.Voice == 1 {
-			queryUpdateThread = `	UPDATE Thread
-									SET votes = votes + 1
-									WHERE id = $1;`
-		} else {
-			queryUpdateThread = `	UPDATE Thread
-									SET votes = votes - 1
-									WHERE id = $1;`
-		}
+		queryUpdateThread = `	UPDATE Thread
+								SET votes = votes - 1
+								WHERE id = $1;`
 	}
 
-	queryInsertVote := `INSERT INTO Vote (nickname, voice) 
-						VALUES ($1, $2);`
+	queryInsertVote := `INSERT INTO Vote (nickname, voice, thread) 
+						VALUES ($1, $2, $3);`
 
-	_, err = t.connectionDB.Exec(queryInsertVote, userVote.Nickname, userVote.Voice)
+	_, err = t.connectionDB.Exec(queryInsertVote, userVote.Nickname, userVote.Voice, threadId)
 	if err != nil {
 		return nil, customErrors.IncorrectInputData
 	}
 
-	if len(threadSlug) != 0 {
-		if _, err = t.connectionDB.Exec(queryUpdateThread, threadSlug); err != nil {
-			return nil, customErrors.IncorrectInputData
-		}
-		selection = t.connectionDB.QueryRow(querySelectThread, threadSlug)
-	} else {
-		if _, err = t.connectionDB.Exec(queryUpdateThread, threadId); err != nil {
-			return nil, customErrors.IncorrectInputData
-		}
-		selection = t.connectionDB.QueryRow(querySelectThread, threadId)
+	if _, err = t.connectionDB.Exec(queryUpdateThread, threadId); err != nil {
+		return nil, customErrors.IncorrectInputData
 	}
+	selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
 	err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
-	if selection.Err() != nil || err != nil {
+	if err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
@@ -270,14 +221,14 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *threadMode
 
 	th := new(threadModel.Thread)
 	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
-	if selection.Err() != nil || err != nil {
+	if err != nil {
 		return nil, customErrors.IncorrectInputData
 	}
 
 	return th, nil
 }
 
-func (t *ThreadRepository) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
+func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
 	querySelect := `SELECT id, parent, author, message, isEdited, forum, thread, created
 					FROM Post
 					WHERE thread = $1 `

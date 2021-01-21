@@ -69,7 +69,7 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *threadMode
 	lengthRBSlug := len(requestBody.Slug)
 	th := new(threadModels.Thread)
 
-	if lengthRBCreated != 0 && lengthRBSlug != 0 {
+	if lengthRBCreated != 0 {
 		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug, created) 
 						VALUES($1, $2, $3, $4, $5, $6) 
 						RETURNING id, title, author, forum, message, slug, created;`
@@ -78,15 +78,6 @@ func (t *ForumRepository) CreateForumThread(slug string, requestBody *threadMode
 						WHERE slug = $1;`
 		row = t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.Author, requestBody.Forum, requestBody.Message, requestBody.Slug, requestBody.Created)
 		err = row.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &th.Created)
-	} else if lengthRBCreated != 0 {
-		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug, created) 
-						VALUES($1, $2, $3, $4, $5, $6) 
-						RETURNING id, title, author, forum, message, created;`
-		querySelect = `	SELECT id, title, author, forum, message, created 
-						FROM Thread 
-						WHERE slug = $1;`
-		row = t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.Author, requestBody.Forum, requestBody.Message, slug, requestBody.Created)
-		err = row.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Created)
 	} else {
 		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug) 
 						VALUES($1, $2, $3, $4, $5) 

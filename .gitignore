@@ -4,3 +4,5 @@ swagger.yml
 .idea
 build/main.Dockerfile
 docker-compose.yml
+main
+tech-db-forum.dat.gz
