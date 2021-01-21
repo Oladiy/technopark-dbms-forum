@@ -63,6 +63,10 @@ func (t *ThreadUseCase) ThreadVote(threadId int, threadSlug string, userVote *vo
 }
 
 func (t *ThreadUseCase) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
+	if threadId == -1 && len(threadSlug) == 0 {
+		return nil, customErrors.IncorrectInputData
+	}
+
 	th, err := t.GetThread("", threadId, threadSlug)
 	if err != nil {
 		return nil, customErrors.ThreadSlugNotFound

@@ -21,8 +21,6 @@ CREATE UNLOGGED TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
-CREATE INDEX index_users_full_info ON Users(nickname, fullname, about, email);
-
 CREATE UNLOGGED TABLE Forum (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
@@ -31,9 +29,6 @@ CREATE UNLOGGED TABLE Forum (
     posts INTEGER DEFAULT 0,
     threads INTEGER DEFAULT 0
 );
-
-CREATE INDEX index_forum_author ON Forum(author);
-CREATE INDEX index_forum_full_info ON Forum(title, author, slug, posts, threads);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
@@ -72,8 +67,6 @@ CREATE UNLOGGED TABLE Vote (
     thread INTEGER NOT NULL,
     UNIQUE(nickname, thread)
 );
-
-CREATE INDEX index_vote_nickname_voice ON Vote(nickname, voice);
 
 CREATE OR REPLACE FUNCTION update_path()
     RETURNS TRIGGER AS

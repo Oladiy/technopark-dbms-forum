@@ -270,7 +270,7 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, so
 							ORDER BY path `
 			}
 		}
-		querySelect += "LIMIT $3 "
+		querySelect += "LIMIT $3;"
 		break
 	case "parent_tree":
 		if since > 0 {
@@ -333,7 +333,8 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, so
 								ORDER BY created, id `
 			}
 		}
-		querySelect += "LIMIT $3 "
+		querySelect += "LIMIT $3;"
+		break
 	}
 
 	querySelectResult, err := t.connectionDB.Query(querySelect, threadId, since, limit)

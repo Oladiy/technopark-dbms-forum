@@ -169,6 +169,7 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	since = - 1
 	parameterSince, ok := r.URL.Query()["since"]
 	if ok && len(parameterSince[0]) > 0 {
 		since, err = strconv.Atoi(parameterSince[0])
@@ -203,6 +204,7 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 
 	id, err = strconv.Atoi(slugOrId)
 	if err != nil {
+		id = -1
 		slug = slugOrId
 	}
 
