@@ -42,11 +42,12 @@ func (t *ThreadDelivery) CreateThreadPosts(w http.ResponseWriter, r *http.Reques
 
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
+		id = -1
 		slug = slugOrId
 	}
 
 	requestBody := make([]postModel.RequestBody, 0)
-	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		utils.MakeErrorResponse(w, err)
 		return
 	}

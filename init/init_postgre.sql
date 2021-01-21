@@ -53,11 +53,6 @@ CREATE UNLOGGED TABLE Thread (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
-CREATE INDEX index_thread_author ON Thread(author);
-CREATE INDEX index_thread_forum ON Thread(Forum);
-CREATE INDEX index_thread_slug ON Thread(slug);
-CREATE INDEX index_thread_full_info ON Thread(title, author, forum, message, slug, votes, created);
-
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
     parent INTEGER DEFAULT 0,
