@@ -49,6 +49,10 @@ func CreateDBConnection(config *ServiceConfig) (*sql.DB, error) {
 		panic(err)
 	}
 
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(time.Duration(50000000000))
+	db.SetConnMaxIdleTime(time.Duration(1000000000))
 	log.Println("Connected to database")
 	return db, nil
 }

@@ -34,6 +34,7 @@ func (t *ThreadUseCase) CreateThreadPosts(threadSlug string, threadId int, posts
 
 	forumSlug := th.Forum
 	threadId = th.Id
+
 	return t.ThreadRepository.CreateThreadPosts(forumSlug, threadId, posts)
 }
 
@@ -42,17 +43,19 @@ func (t *ThreadUseCase) GetThread(forumSlug string, threadId int, threadSlug str
 }
 
 func (t *ThreadUseCase) ThreadVote(threadId int, threadSlug string, userVote *voteModel.Vote) (*threadModel.Thread, error) {
-	_, err := t.GetThread("", threadId, threadSlug)
+	th, err := t.GetThread("", threadId, threadSlug)
 	if err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
+
+	threadId = th.Id
 
 	u, err := t.UserRepository.GetUserProfile(userVote.Nickname)
 	if err != nil || u == nil {
 		return nil, customErrors.UserNotFound
 	}
 
-	return t.ThreadRepository.ThreadVote(threadId, threadSlug, userVote)
+	return t.ThreadRepository.ThreadVote(threadId, userVote)
 }
 
 func (t *ThreadUseCase) GetThreadPosts(threadId int, threadSlug string, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
@@ -63,7 +66,7 @@ func (t *ThreadUseCase) GetThreadPosts(threadId int, threadSlug string, limit in
 
 	threadId = th.Id
 
-	return t.ThreadRepository.GetThreadPosts(threadId, threadSlug, limit, since, sort, desc)
+	return t.ThreadRepository.GetThreadPosts(threadId, limit, since, sort, desc)
 }
 
 func (t *ThreadUseCase) UpdateThread(threadId int, threadSlug string, threadToUpdate *threadModel.RequestBody) (*threadModel.Thread, error) {
