@@ -21,8 +21,6 @@ CREATE UNLOGGED TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
-CREATE INDEX index_users_full_info ON Users(nickname, fullname, about, email);
-
 CREATE UNLOGGED TABLE Forum (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
@@ -31,9 +29,6 @@ CREATE UNLOGGED TABLE Forum (
     posts INTEGER DEFAULT 0,
     threads INTEGER DEFAULT 0
 );
-
-CREATE INDEX index_forum__author ON Forum(author);
-create INDEX index_forum_full_info ON Forum(title, author, slug, posts, threads);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
@@ -53,11 +48,6 @@ CREATE UNLOGGED TABLE Thread (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
-CREATE INDEX index_thread_author ON Thread(author);
-CREATE INDEX index_thread_forum ON Thread(Forum);
-create INDEX index_thread_slug ON Thread(slug);
-create INDEX index_thread_full_info ON Thread(title, author, forum, message, slug, votes, created);
-
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
     parent INTEGER DEFAULT 0,
@@ -70,10 +60,6 @@ CREATE UNLOGGED TABLE Post (
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
 
--- CREATE INDEX index_post_thread ON Post(thread, path);
--- CREATE INDEX index_post_thread_first_path ON Post((path[1]), path);
--- CREATE INDEX index_post_full_info ON Post(parent, author, message, isEdited, forum, thread, created);
-
 CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,
     nickname citext NOT NULL,
@@ -81,8 +67,6 @@ CREATE UNLOGGED TABLE Vote (
     thread INTEGER NOT NULL,
     UNIQUE(nickname, thread)
 );
-
-CREATE INDEX ON index_vote_nickname_voice ON Vote(nickname, voice);
 
 CREATE OR REPLACE FUNCTION update_path()
     RETURNS TRIGGER AS

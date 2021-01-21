@@ -1,15 +1,15 @@
 package repository
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx"
 	"technopark-dbms-forum/internal/pkg/database_service/models"
 )
 
 type DatabaseServiceRepository struct {
-	connectionDB *sql.DB
+	connectionDB *pgx.ConnPool
 }
 
-func NewDatabaseServiceRepository(connectionDB *sql.DB) *DatabaseServiceRepository {
+func NewDatabaseServiceRepository(connectionDB *pgx.ConnPool) *DatabaseServiceRepository {
 	return &DatabaseServiceRepository {
 		connectionDB: connectionDB,
 	}

@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"database/sql"
+	"github.com/go-openapi/strfmt"
+	"github.com/jackc/pgx"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	forumModels "technopark-dbms-forum/internal/pkg/forum/models"
 	threadModels "technopark-dbms-forum/internal/pkg/thread/models"
@@ -9,10 +10,10 @@ import (
 )
 
 type ForumRepository struct {
-	connectionDB *sql.DB
+	connectionDB *pgx.ConnPool
 }
 
-func NewForumRepository(connectionDB *sql.DB) *ForumRepository {
+func NewForumRepository(connectionDB *pgx.ConnPool) *ForumRepository {
 	return &ForumRepository {
 		connectionDB: connectionDB,
 	}
@@ -31,8 +32,8 @@ func (t *ForumRepository) CreateForum(requestBody *forumModels.RequestBody) (*fo
 	err := row.Scan(&f.Title, &f.User, &f.Slug)
 	if err != nil {
 		selection := t.connectionDB.QueryRow(querySelect, requestBody.Slug)
-		err := selection.Scan(&f.Title, &f.User, &f.Slug, &f.Posts, &f.Threads)
-		if selection.Err() != nil || err != nil {
+		err = selection.Scan(&f.Title, &f.User, &f.Slug, &f.Posts, &f.Threads)
+		if err != nil {
 			return nil, customErrors.IncorrectInputData
 		}
 
@@ -60,65 +61,66 @@ func (t *ForumRepository) GetForumDetails(slug string) (*forumModels.Forum, erro
 }
 
 func (t *ForumRepository) CreateForumThread(slug string, requestBody *threadModels.RequestBody) (*threadModels.Thread, error) {
+	var created strfmt.DateTime
 	var queryInsert string
 	var querySelect string
-	var row *sql.Row
+	var row *pgx.Row
 	var err error
 
 	lengthRBCreated := len(requestBody.Created)
 	lengthRBSlug := len(requestBody.Slug)
 	th := new(threadModels.Thread)
 
+
 	if lengthRBCreated != 0 {
 		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug, created) 
 						VALUES($1, $2, $3, $4, $5, $6) 
-						RETURNING id, title, author, forum, message, slug, created;`
+						RETURNING id, slug, created;`
 		querySelect = `	SELECT id, title, author, forum, message, slug, created 
 						FROM Thread 
 						WHERE slug = $1;`
 		row = t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.Author, requestBody.Forum, requestBody.Message, requestBody.Slug, requestBody.Created)
-		err = row.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &th.Created)
+		err = row.Scan(&th.Id, &th.Slug, &created)
 	} else {
 		queryInsert = `	INSERT INTO Thread (title, author, forum, message, slug) 
 						VALUES($1, $2, $3, $4, $5) 
-						RETURNING id, title, author, forum, message, slug, created;`
+						RETURNING id, slug, created;`
 		querySelect = `	SELECT id, title, author, forum, message, slug 
 						FROM Thread 
 						WHERE slug = $1;`
 		row = t.connectionDB.QueryRow(queryInsert, requestBody.Title, requestBody.Author, requestBody.Forum, requestBody.Message, requestBody.Slug)
-		err = row.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &th.Created)
+		err = row.Scan(&th.Id, &th.Slug, &created)
 	}
 
 	if err != nil {
-		var selection *sql.Row
+		var selection *pgx.Row
 
-		if len(requestBody.Created) != 0 {
-			selection = t.connectionDB.QueryRow(querySelect, slug)
-		} else {
-			selection = t.connectionDB.QueryRow(querySelect, requestBody.Slug)
-		}
-
+		selection = t.connectionDB.QueryRow(querySelect, requestBody.Slug)
 		if lengthRBCreated != 0 && lengthRBSlug != 0 {
-			err = selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &th.Created)
-		} else if len(requestBody.Created) != 0 {
-			err = selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Created)
+			err = selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &created)
 		} else {
-			err = selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug)
+			err = selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &created)
 		}
 
-		if selection.Err() != nil || err != nil {
+		if err != nil {
 			return nil, customErrors.IncorrectInputData
 		}
 
 		return th, customErrors.ThreadAlreadyExists
 	}
 
+	th.Title = requestBody.Title
+	th.Message = requestBody.Message
+	th.Author = requestBody.Author
+	th.Created = created.String()
+	th.Forum = slug
+
 	return th, nil
 }
 
 func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, desc bool) (*[]threadModels.Thread, error) {
 	var querySelect string
-	var querySelectResult *sql.Rows
+	var querySelectResult *pgx.Rows
 	var err error
 
 	selection := make([]threadModels.Thread, 0)
@@ -184,19 +186,19 @@ func (t *ForumRepository) GetForumThreads(slug string, limit int, since string, 
 		}
 	}
 
-	if err != nil || querySelectResult.Err() != nil {
+	if err != nil {
 		return nil, customErrors.IncorrectInputData
 	}
 
+	var created strfmt.DateTime
 	for querySelectResult.Next() {
-		t := new(threadModels.Thread)
-		_ = querySelectResult.Scan(&t.Id, &t.Title, &t.Author, &t.Forum, &t.Message, &t.Slug, &t.Votes, &t.Created)
-		selection = append(selection, *t)
+		th := new(threadModels.Thread)
+		_ = querySelectResult.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Slug, &th.Votes, &created)
+		th.Created = created.String()
+		selection = append(selection, *th)
 	}
-	err = querySelectResult.Close()
-	if err != nil {
-		return nil, err
-	}
+
+	querySelectResult.Close()
 
 	return &selection, nil
 }

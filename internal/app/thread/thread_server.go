@@ -1,9 +1,9 @@
 package thread
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx"
 	"net/http"
 	"technopark-dbms-forum/internal/pkg/common/consts"
 	"technopark-dbms-forum/internal/pkg/thread"
@@ -20,7 +20,7 @@ type Service struct {
 	Repository thread.Repository
 }
 
-func Run(connectionDB *sql.DB) *Service {
+func Run(connectionDB *pgx.ConnPool) *Service {
 	userRepository := userRep.NewUserRepository(connectionDB)
 	threadRepository := repository.NewThreadRepository(connectionDB)
 	threadUseCase := usecase.NewThreadUseCase(threadRepository, userRepository)

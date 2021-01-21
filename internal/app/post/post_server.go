@@ -1,9 +1,9 @@
 package post
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx"
 	"net/http"
 	"technopark-dbms-forum/internal/pkg/common/consts"
 	forumRep "technopark-dbms-forum/internal/pkg/forum/repository"
@@ -22,7 +22,7 @@ type Service struct {
 	Repository post.Repository
 }
 
-func Run(connectionDB *sql.DB) *Service {
+func Run(connectionDB *pgx.ConnPool) *Service {
 	forumRepository := forumRep.NewForumRepository(connectionDB)
 	postRepository := repository.NewPostRepository(connectionDB)
 	threadRepository := threadRep.NewThreadRepository(connectionDB)

@@ -1,9 +1,9 @@
 package forum
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx"
 	"net/http"
 	"technopark-dbms-forum/internal/pkg/common/consts"
 	"technopark-dbms-forum/internal/pkg/forum"
@@ -21,7 +21,7 @@ type Service struct {
 	Repository forum.Repository
 }
 
-func Run(connectionDB *sql.DB) *Service {
+func Run(connectionDB *pgx.ConnPool) *Service {
 	threadRepository := threadRep.NewThreadRepository(connectionDB)
 	userRepository := userRep.NewUserRepository(connectionDB)
 	forumRepository := repository.NewForumRepository(connectionDB)

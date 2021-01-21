@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	"technopark-dbms-forum/internal/pkg/user/models"
 )
 
 type UserRepository struct {
-	connectionDB *sql.DB
+	connectionDB *pgx.ConnPool
 }
 
-func NewUserRepository(connectionDB *sql.DB) *UserRepository {
+func NewUserRepository(connectionDB *pgx.ConnPool) *UserRepository {
 	return &UserRepository {
 		connectionDB: connectionDB,
 	}

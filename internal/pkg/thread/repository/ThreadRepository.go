@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/go-openapi/strfmt"
+	"github.com/jackc/pgx"
 	"strings"
 	customErrors "technopark-dbms-forum/internal/pkg/common/custom_errors"
 	postModel "technopark-dbms-forum/internal/pkg/post/models"
@@ -12,10 +13,10 @@ import (
 )
 
 type ThreadRepository struct {
-	connectionDB *sql.DB
+	connectionDB *pgx.ConnPool
 }
 
-func NewThreadRepository(connectionDB *sql.DB) *ThreadRepository {
+func NewThreadRepository(connectionDB *pgx.ConnPool) *ThreadRepository {
 	return &ThreadRepository {
 		connectionDB: connectionDB,
 	}
@@ -43,22 +44,30 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 		if err.Error() == `pq: insert or update on table "forumusers" violates foreign key constraint "forumusers_user_nickname_fkey"` {
 			return nil, customErrors.PostNotFound
 		}
-		if queryInsertResult == nil {
-			return nil, customErrors.ThreadParentConflict
-		}
 
 		return nil, customErrors.IncorrectInputData
 	}
 
 	for index := 0; queryInsertResult.Next(); index++ {
 		p := new(postModel.Post)
-		_ = queryInsertResult.Scan(&p.Id, &p.Created)
+		var created strfmt.DateTime
+		_ = queryInsertResult.Scan(&p.Id, &created)
+
 		p.Author = (*posts)[index].Author
 		p.Message = (*posts)[index].Message
 		p.Parent = (*posts)[index].Parent
 		p.Forum = forumSlug
 		p.Thread = threadId
+		p.Created = created.String()
 		selection = append(selection, *p)
+	}
+
+	if queryInsertResult.Err() != nil {
+		if strings.Contains(queryInsertResult.Err().Error(),"Parent not exists"){
+			return nil, customErrors.ThreadParentConflict
+		}
+
+		return nil, customErrors.UserNotFound
 	}
 
 	return &selection, nil
@@ -66,7 +75,7 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 
 func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*threadModel.Thread, error) {
 	var querySelect string
-	var selection *sql.Row
+	var selection *pgx.Row
 
 	if len(forumSlug) != 0 {
 		querySelect = `	SELECT id, title, author, forum, message, votes, slug, created
@@ -89,17 +98,21 @@ func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug 
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
+	var created strfmt.DateTime
 	th := new(threadModel.Thread)
-	if err := selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Votes, &th.Slug, &th.Created); err != nil {
+	if err := selection.Scan(&th.Id, &th.Title, &th.Author, &th.Forum, &th.Message, &th.Votes, &th.Slug, &created); err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
+
+	th.Created = created.String()
 
 	return th, nil
 }
 
 func (t *ThreadRepository) ThreadVote(threadId int, userVote *voteModel.Vote) (*threadModel.Thread, error) {
+	var created strfmt.DateTime
 	var queryUpdateThread string
-	var selection *sql.Row
+	var selection *pgx.Row
 	var err error
 
 	querySelectThread := `	SELECT author, created, forum, id, message, slug, title, votes 
@@ -125,10 +138,11 @@ func (t *ThreadRepository) ThreadVote(threadId int, userVote *voteModel.Vote) (*
 		if v.Voice == userVote.Voice {
 			selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
-			err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
+			err = selection.Scan(&th.Author, &created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 			if err != nil {
 				return nil, customErrors.ThreadSlugNotFound
 			}
+			th.Created = created.String()
 
 			return th, nil
 		}
@@ -148,10 +162,11 @@ func (t *ThreadRepository) ThreadVote(threadId int, userVote *voteModel.Vote) (*
 		}
 		selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
-		err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
+		err = selection.Scan(&th.Author, &created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 		if err != nil {
 			return nil, customErrors.ThreadSlugNotFound
 		}
+		th.Created = created.String()
 
 		return th, nil
 	}
@@ -179,16 +194,17 @@ func (t *ThreadRepository) ThreadVote(threadId int, userVote *voteModel.Vote) (*
 	}
 	selection = t.connectionDB.QueryRow(querySelectThread, threadId)
 
-	err = selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
+	err = selection.Scan(&th.Author, &created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 	if err != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
+	th.Created = created.String()
 
 	return th, nil
 }
 
 func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *threadModel.RequestBody) (*threadModel.Thread, error) {
-	var selection *sql.Row
+	var selection *pgx.Row
 	isFirst := true
 	fieldsToUpdate := make([]interface{}, 0)
 
@@ -220,10 +236,13 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *threadMode
 	selection = t.connectionDB.QueryRow(queryUpdate, fieldsToUpdate...)
 
 	th := new(threadModel.Thread)
-	err := selection.Scan(&th.Author, &th.Created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
+	var created strfmt.DateTime
+	err := selection.Scan(&th.Author, &created, &th.Forum, &th.Id, &th.Message, &th.Slug, &th.Title, &th.Votes)
 	if err != nil {
 		return nil, customErrors.IncorrectInputData
 	}
+
+	th.Created = created.String()
 
 	return th, nil
 }
@@ -323,12 +342,14 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, so
 	}
 
 	selection := make([]postModel.Post, 0)
+	var created strfmt.DateTime
 	for querySelectResult.Next() {
 		p := new(postModel.Post)
-		err = querySelectResult.Scan(&p.Id, &p.Parent, &p.Author, &p.Message, &p.IsEdited, &p.Forum, &p.Thread, &p.Created)
+		err = querySelectResult.Scan(&p.Id, &p.Parent, &p.Author, &p.Message, &p.IsEdited, &p.Forum, &p.Thread, &created)
 		if err != nil {
 			return nil, err
 		}
+		p.Created = created.String()
 		selection = append(selection, *p)
 	}
 

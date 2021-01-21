@@ -1,9 +1,9 @@
 package user
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx"
 	"net/http"
 	"technopark-dbms-forum/internal/pkg/common/consts"
 	"technopark-dbms-forum/internal/pkg/user"
@@ -19,7 +19,7 @@ type Service struct {
 	Repository user.Repository
 }
 
-func Run(connectionDB *sql.DB) *Service {
+func Run(connectionDB *pgx.ConnPool) *Service {
 	userRepository := repository.NewUserRepository(connectionDB)
 	userUseCase := usecase.NewUserUseCase(userRepository)
 	userDelivery := delivery.NewUserDelivery(userUseCase)

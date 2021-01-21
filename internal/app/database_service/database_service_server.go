@@ -1,8 +1,8 @@
 package database_service
 
 import (
-	"database/sql"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx"
 	databaseService "technopark-dbms-forum/internal/pkg/database_service"
 	"technopark-dbms-forum/internal/pkg/database_service/delivery"
 	"technopark-dbms-forum/internal/pkg/database_service/repository"
@@ -14,7 +14,7 @@ type Service struct {
 	Router *mux.Router
 }
 
-func Run(connectionDB *sql.DB) *Service{
+func Run(connectionDB *pgx.ConnPool) *Service{
 	databaseServiceRepository := repository.NewDatabaseServiceRepository(connectionDB)
 	databaseServiceDelivery := delivery.NewDatabaseServiceDelivery(databaseServiceRepository)
 

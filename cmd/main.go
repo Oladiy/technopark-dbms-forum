@@ -1,8 +1,7 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
+	"github.com/jackc/pgx"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
@@ -33,28 +32,22 @@ type ServiceConfig struct {
 	DatabasePort   	 int
 }
 
-
-func CreateDBConnection(config *ServiceConfig) (*sql.DB, error) {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.DatabaseDomain, config.DatabasePort, config.DatabaseUser,
-		config.DatabasePassword, config.DatabaseName)
-
-	db, err := sql.Open("postgres", psqlconn)
+func CreateDBConnection(config *ServiceConfig) (*pgx.ConnPool, error) {
+	pool, err := pgx.NewConnPool(pgx.ConnPoolConfig{
+		ConnConfig: pgx.ConnConfig{
+			User:     config.DatabaseUser,
+			Password: config.DatabasePassword,
+			Port:     uint16(config.DatabasePort),
+			Database: config.DatabaseName,
+			Host: config.DatabaseDomain,
+		},
+		MaxConnections: 50,
+	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-
-	db.SetMaxOpenConns(50)
-	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(time.Duration(50000000000))
-	db.SetConnMaxIdleTime(time.Duration(1000000000))
-	log.Println("Connected to database")
-	return db, nil
+	return pool, nil
 }
 
 func configureMainRouter(application *ServerConfig) http.Handler{
@@ -69,7 +62,7 @@ func configureMainRouter(application *ServerConfig) http.Handler{
 	return handler
 }
 
-func InitService(connectionDB *sql.DB) *ServerConfig{
+func InitService(connectionDB *pgx.ConnPool) *ServerConfig{
 	forumService 	:= forum.Run(connectionDB)
 	postService 	:= post.Run(connectionDB)
 	dbService		:= databaseService.Run(connectionDB)
