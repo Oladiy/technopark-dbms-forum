@@ -70,9 +70,9 @@ CREATE UNLOGGED TABLE Post (
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
 
-CREATE INDEX index_post_thread ON Post(thread, path);
-CREATE INDEX index_post_thread_first_path ON Post((path[1]), path);
-CREATE INDEX index_post_full_info ON Post(parent, author, message, isEdited, forum, thread, created);
+-- CREATE INDEX index_post_thread ON Post(thread, path);
+-- CREATE INDEX index_post_thread_first_path ON Post((path[1]), path);
+-- CREATE INDEX index_post_full_info ON Post(parent, author, message, isEdited, forum, thread, created);
 
 CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,
