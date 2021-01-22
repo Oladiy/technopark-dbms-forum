@@ -30,6 +30,8 @@ CREATE UNLOGGED TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
+CREATE INDEX index_forum_slug ON Forum(slug);
+
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
     forum_slug citext NOT NULL REFERENCES Forum(slug),
