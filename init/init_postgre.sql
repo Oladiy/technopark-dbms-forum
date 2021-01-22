@@ -68,6 +68,7 @@ CREATE UNLOGGED TABLE Post (
 );
 
 CREATE INDEX index_post_thread ON Post(thread);
+CREATE INDEX index_post_forum ON Post(forum);
 
 CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,
