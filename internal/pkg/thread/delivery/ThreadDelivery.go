@@ -40,11 +40,9 @@ func (t *ThreadDelivery) CreateThreadPosts(w http.ResponseWriter, r *http.Reques
 	var id int
 	slugOrId := vars[consts.ThreadSlugPath]
 
-	defer r.Body.Close()
-
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
-		id = -1
+		id = 0
 		slug = slugOrId
 	}
 
@@ -171,7 +169,7 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	since = - 1
+	since = -1
 	parameterSince, ok := r.URL.Query()["since"]
 	if ok && len(parameterSince[0]) > 0 {
 		since, err = strconv.Atoi(parameterSince[0])
@@ -182,7 +180,7 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 
 	sort = "flat"
 	parameterSort, ok := r.URL.Query()["sort"]
-	if ok && len(parameterSort) > 0 {
+	if ok && len(parameterSort[0]) > 0 {
 		if parameterSort[0] == "tree" {
 			sort = "tree"
 		}
@@ -206,14 +204,19 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 
 	id, err = strconv.Atoi(slugOrId)
 	if err != nil {
-		id = -1
+		id = 0
 		slug = slugOrId
 	}
 
 	response, err := t.ThreadUseCase.GetThreadPosts(id, slug, limit, since, sort, desc)
 	if err != nil {
 		w.WriteHeader(customErrors.StatusCodes[err])
-		utils.MakeErrorResponse(w, err)
+		if response != nil {
+			output, _ := json.Marshal(response)
+			_, _ = w.Write(output)
+		} else {
+			utils.MakeErrorResponse(w, err)
+		}
 
 		return
 	}
