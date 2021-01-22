@@ -32,8 +32,9 @@ CREATE UNLOGGED TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
-CREATE INDEX index_forum_slug ON Forum(slug);
-CREATE INDEX index_forum_author_slug ON Forum(author, slug);
+CREATE INDEX index_forum_author_slug ON Forum(author);
+create index index_forum_full_info ON Forum(title,user_id, slug, threads, posts);
+CREATE INDEX index_forum_slug_title_author ON Forum(slug, title, author);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
@@ -53,8 +54,11 @@ CREATE UNLOGGED TABLE Thread (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
-CREATE INDEX index_thread_slug ON Thread(id, title, author, forum, message, votes, slug, created);
+CREATE INDEX index_thread_full_info ON Thread(title, author, forum, message, votes, slug, created);
 CREATE INDEX index_thread_created ON Thread(forum, created);
+CREATE INDEX index_thread_author ON Thread(author);
+CREATE INDEX index_thread_forum ON Thread(forum);
+CREATE INDEX index_thread_slug ON Thread(slug);
 
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
@@ -68,9 +72,10 @@ CREATE UNLOGGED TABLE Post (
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
 
-CREATE INDEX index_post_thread ON Post(thread);
+CREATE INDEX index_post_thread ON Post(id, thread);
 CREATE INDEX index_post_forum ON Post(forum);
 CREATE INDEX index_post_path ON Post(thread, path);
+CREATE INDEX index_post_thread_first_path ON Post((path[1]), path);
 
 CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,
