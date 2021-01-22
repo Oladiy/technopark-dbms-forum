@@ -21,6 +21,8 @@ CREATE UNLOGGED TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
+CREATE INDEX index_users_full_info ON Users(nickname, fullname, about, email);
+
 CREATE UNLOGGED TABLE Forum (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
