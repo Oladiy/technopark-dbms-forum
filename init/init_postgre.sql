@@ -32,7 +32,6 @@ CREATE UNLOGGED TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
-CREATE INDEX index_forum_author ON Forum(author);
 CREATE INDEX index_forum_full_info ON Forum(title, author, slug, threads, posts);
 
 CREATE UNLOGGED TABLE ForumUsers (

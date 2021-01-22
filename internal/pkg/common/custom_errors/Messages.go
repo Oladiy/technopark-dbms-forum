@@ -5,6 +5,8 @@ import (
 )
 
 var (
+	DatabaseError			= errors.New("something wrong with database")
+
 	ForumAlreadyExists 		= errors.New("forum already exists")
 	ForumSlugNotFound 		= errors.New("can't find slug")
 	ForumUserNotFound 		= errors.New("can't find user")

@@ -6,6 +6,8 @@ import (
 
 var (
 	StatusCodes = map[error]int {
+		DatabaseError: 			 http.StatusInsufficientStorage,
+
 		ForumAlreadyExists: 	 http.StatusConflict,
 		ForumSlugNotFound: 		 http.StatusNotFound,
 		ForumUserNotFound: 		 http.StatusNotFound,

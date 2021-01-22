@@ -40,6 +40,8 @@ func (t *ThreadDelivery) CreateThreadPosts(w http.ResponseWriter, r *http.Reques
 	var id int
 	slugOrId := vars[consts.ThreadSlugPath]
 
+	defer r.Body.Close()
+
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
 		id = -1

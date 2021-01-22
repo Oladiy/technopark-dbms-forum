@@ -23,6 +23,10 @@ func NewThreadRepository(connectionDB *pgx.ConnPool) *ThreadRepository {
 }
 
 func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, posts *[]postModel.RequestBody) (*[]postModel.Post, error) {
+	if t.connectionDB == nil {
+		return nil, customErrors.DatabaseError
+	}
+
 	queryInsert := `INSERT INTO Post (parent, author, message, forum, thread, created) VALUES %s`
 	selection := make([]postModel.Post, 0)
 
@@ -248,6 +252,10 @@ func (t *ThreadRepository) UpdateThread(threadId int, threadToUpdate *threadMode
 }
 
 func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, sort string, desc bool) (*[]postModel.Post, error) {
+	if t.connectionDB == nil {
+		return nil, customErrors.DatabaseError
+	}
+
 	querySelect := `SELECT id, parent, author, message, isEdited, forum, thread, created
 					FROM Post
 					WHERE thread = $1 `
@@ -338,7 +346,7 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, so
 	}
 
 	querySelectResult, err := t.connectionDB.Query(querySelect, threadId, since, limit)
-	if err != nil || querySelectResult == nil {
+	if err != nil || querySelectResult == nil || querySelectResult.Err() != nil {
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
