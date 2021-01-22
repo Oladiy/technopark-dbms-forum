@@ -54,6 +54,7 @@ CREATE UNLOGGED TABLE Thread (
 );
 
 CREATE INDEX index_thread_slug ON Thread(id, title, author, forum, message, votes, slug, created);
+CREATE INDEX index_thread_created ON Thread(forum, created);
 
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
