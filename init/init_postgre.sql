@@ -32,7 +32,7 @@ CREATE UNLOGGED TABLE Forum (
     threads INTEGER DEFAULT 0
 );
 
-CREATE INDEX index_forum_full_info ON Forum(title, author, slug, threads, posts);
+CREATE INDEX index_forum_slug ON Forum(slug);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
@@ -51,10 +51,6 @@ CREATE UNLOGGED TABLE Thread (
     slug citext NOT NULL,
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
-
-CREATE INDEX index_thread_slug ON Thread(slug);
-CREATE INDEX index_thread_full_info ON Thread(title, author, forum, message, votes, created, slug);
-CREATE INDEX index_thread_forum_created ON Thread(forum, created);
 
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
