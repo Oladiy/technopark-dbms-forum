@@ -21,6 +21,7 @@ CREATE UNLOGGED TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
+CREATE INDEX index_users_nickname ON Users(nickname);
 CREATE INDEX index_users_full_info ON Users(nickname, fullname, about, email);
 
 CREATE UNLOGGED TABLE Forum (
@@ -72,7 +73,7 @@ CREATE UNLOGGED TABLE Post (
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
 
-CREATE INDEX index_post_thread ON Post(id, thread);
+CREATE INDEX index_post_thread ON Post(thread);
 CREATE INDEX index_post_forum ON Post(forum);
 CREATE INDEX index_post_path ON Post(thread, path);
 CREATE INDEX index_post_thread_first_path ON Post((path[1]), path);
