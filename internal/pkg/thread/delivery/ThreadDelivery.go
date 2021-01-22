@@ -160,40 +160,31 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 	var sort string
 	var err error
 
-	limit = 100
-	parameterLimit, ok := r.URL.Query()["limit"]
-	if ok && len(parameterLimit[0]) > 0 {
-		limit, err = strconv.Atoi(parameterLimit[0])
-		if err != nil {
-			limit = 100
-		}
+	parameterLimit := r.URL.Query().Get("limit")
+	limit, err = strconv.Atoi(parameterLimit)
+	if err != nil {
+		limit = 100
 	}
 
-	since = -1
-	parameterSince, ok := r.URL.Query()["since"]
-	if ok && len(parameterSince[0]) > 0 {
-		since, err = strconv.Atoi(parameterSince[0])
-		if err != nil {
-			since = -1
-		}
+	parameterSince := r.URL.Query().Get("since")
+	since, err = strconv.Atoi(parameterSince)
+	if err != nil {
+		since = -1
 	}
 
-	sort = "flat"
-	parameterSort, ok := r.URL.Query()["sort"]
-	if ok && len(parameterSort[0]) > 0 {
-		if parameterSort[0] == "tree" {
+	parameterSort := r.URL.Query().Get("sort")
+	if len(parameterSort) > 0 {
+		if parameterSort == "tree" {
 			sort = "tree"
 		}
-		if parameterSort[0] == "parent_tree" {
+		if parameterSort == "parent_tree" {
 			sort = "parent_tree"
 		}
 	}
 
-	parameterDesc, ok := r.URL.Query()["desc"]
-	if ok && len(parameterDesc) > 0 {
-		if parameterDesc[0] == "true" {
-			desc = true
-		}
+	parameterDesc := r.URL.Query().Get("desc")
+	if parameterDesc == "true" {
+		desc = true
 	}
 
 	vars := mux.Vars(r)
@@ -204,7 +195,6 @@ func (t *ThreadDelivery) GetThreadPosts(w http.ResponseWriter, r *http.Request) 
 
 	id, err = strconv.Atoi(slugOrId)
 	if err != nil {
-		id = 0
 		slug = slugOrId
 	}
 

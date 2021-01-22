@@ -64,6 +64,14 @@ func (t *ThreadUseCase) GetThreadPosts(threadId int, threadSlug string, limit in
 		return nil, customErrors.ThreadSlugNotFound
 	}
 
+	if limit < 1 {
+		limit = 100
+	}
+
+	if len(sort) == 0 {
+		sort = "flat"
+	}
+
 	threadId = th.Id
 
 	return t.ThreadRepository.GetThreadPosts(threadId, limit, since, sort, desc)
