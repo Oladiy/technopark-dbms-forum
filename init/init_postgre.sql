@@ -21,6 +21,8 @@ CREATE UNLOGGED TABLE Users (
     email citext NOT NULL UNIQUE
 );
 
+CREATE INDEX index_users_full_info ON Users(nickname, fullname, about, email);
+
 CREATE UNLOGGED TABLE Forum (
     id SERIAL PRIMARY KEY,
     title VARCHAR(256) NOT NULL,
@@ -29,6 +31,9 @@ CREATE UNLOGGED TABLE Forum (
     posts INTEGER DEFAULT 0,
     threads INTEGER DEFAULT 0
 );
+
+CREATE INDEX index_forum_author ON Forum(author);
+CREATE INDEX index_forum_full_info ON Forum(title, author, slug, threads, posts);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
@@ -47,6 +52,10 @@ CREATE UNLOGGED TABLE Thread (
     slug citext NOT NULL,
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
+
+CREATE INDEX index_thread_slug ON Thread(slug);
+CREATE INDEX index_thread_full_info ON Thread(title, author, forum, message, votes, created, slug);
+CREATE INDEX index_thread_forum_created ON Thread(forum, created);
 
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
