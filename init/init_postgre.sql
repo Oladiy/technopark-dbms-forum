@@ -48,6 +48,8 @@ CREATE UNLOGGED TABLE Thread (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now()
 );
 
+CREATE INDEX index_thread_slug ON Thread(slug);
+
 CREATE UNLOGGED TABLE Post (
     id SERIAL PRIMARY KEY,
     parent INTEGER DEFAULT 0,
@@ -59,6 +61,8 @@ CREATE UNLOGGED TABLE Post (
     created TIMESTAMP WITH TIME ZONE DEFAULT Now(),
     path INTEGER [] DEFAULT '{0}':: INTEGER []
 );
+
+CREATE INDEX index_post_thread ON Post(thread);
 
 CREATE UNLOGGED TABLE Vote (
     id SERIAL PRIMARY KEY,

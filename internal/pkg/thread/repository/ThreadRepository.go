@@ -78,6 +78,10 @@ func (t *ThreadRepository) CreateThreadPosts(forumSlug string, threadId int, pos
 }
 
 func (t *ThreadRepository) GetThread(forumSlug string, threadId int, threadSlug string) (*threadModel.Thread, error) {
+	if t.connectionDB == nil {
+		return nil, customErrors.DatabaseError
+	}
+
 	var querySelect string
 	var selection *pgx.Row
 
@@ -334,14 +338,13 @@ func (t *ThreadRepository) GetThreadPosts(threadId int, limit int, since int, so
 			}
 		} else {
 			if desc {
-				querySelect += `AND id > $2
-								ORDER BY created DESC, id DESC `
+				querySelect += "AND id > $2 ORDER BY created DESC, id DESC "
 			} else {
 				querySelect += `AND id > $2
 								ORDER BY created, id `
 			}
 		}
-		querySelect += "LIMIT $3;"
+		querySelect += "LIMIT $3 "
 		break
 	}
 
