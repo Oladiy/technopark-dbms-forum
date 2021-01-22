@@ -33,6 +33,7 @@ CREATE UNLOGGED TABLE Forum (
 );
 
 CREATE INDEX index_forum_slug ON Forum(slug);
+CREATE INDEX index_forum_author_slug ON Forum(author, slug);
 
 CREATE UNLOGGED TABLE ForumUsers (
     id SERIAL PRIMARY KEY,
